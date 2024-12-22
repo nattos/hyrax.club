@@ -1,6 +1,6 @@
 import { css, html, LitElement } from 'lit';
 import {} from 'lit/html';
-import { customElement, query, queryAll } from 'lit/decorators.js';
+import { customElement, property, query, queryAll } from 'lit/decorators.js';
 
 @customElement('hyrax-app')
 export class App extends LitElement {
@@ -94,7 +94,7 @@ p {
 }
 
 .background fullscreen-button {
-  // visibility: hidden;
+  visibility: hidden;
 }
 @media only screen and (hover: none) {
   .background fullscreen-button {
@@ -102,7 +102,7 @@ p {
   }
 }
 
-.background:hover .fullscreen-button {
+.background:hover fullscreen-button {
   visibility: visible;
 }
 
@@ -114,7 +114,25 @@ fullscreen-button {
 fullscreen-button:hover {
   background-color: rgba(0, 0, 0, 0.6);
 }
+
+.scroll-indicator {
+  position: absolute;
+  left: 50%;
+  top: 100vh;
+  transform: translate(-50%, -200%);
+  color: rgba(255, 255, 255, 0.35);
+  filter: blur(0.3px);
+
+  opacity: 0;
+  animation-name: fade-in;
+  animation-duration: 8s;
+  animation-fill-mode: both;
+  animation-timing-function: ease-out;
+  animation-delay: 5s;
+}
 `];
+
+  @property({ attribute: false }) didScroll = false;
 
   @query('.outer-scroll-container') scrollContainer!: HTMLElement;
   @queryAll('.content-panel') allContentPanels!: NodeListOf<HTMLElement>;
@@ -150,6 +168,9 @@ fullscreen-button:hover {
     }
     this.lastNonFullscreenScrollY = this.scrollContainer.scrollTop;
     const viewportCenter = getCenterY(this.scrollContainer.getBoundingClientRect());
+    if (this.scrollContainer.scrollTop > viewportCenter) {
+      this.didScroll = true;
+    }
 
     if (this.currentContentPanel !== this.allContentPanels.item(this.currentContentPanelIndex)) {
       this.currentContentPanel = undefined;
@@ -283,6 +304,7 @@ fullscreen-button:hover {
   render() {
     return html`
 <div class="outer-scroll-container" @scroll=${() => this.onScroll()}>
+  <div class="scroll-indicator" ?hidden=${this.didScroll}>scroll-for-more</div>
   <div class="content-panel">
     <div class="foreground">
       <div class="foreground-content">
