@@ -1,0 +1,31 @@
+{
+  "name": "nano-player",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./dist/main.js",
+  "scripts": {
+    "develop": "webpack-dev-server --config webpack.config.js --mode development",
+    "run": "webpack-dev-server --mode production",
+    "build": "webpack --mode production"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "copy-webpack-plugin": "^12.0.2",
+    "css-loader": "^6.8.1",
+    "html-webpack-plugin": "^5.5.3",
+    "lit": "^2.8.0",
+    "mobx": "^6.10.0",
+    "style-loader": "^3.3.3",
+    "ts-loader": "^9.4.4",
+    "ts-node": "^10.9.1",
+    "webpack": "^5.88.2",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^4.15.1"
+  },
+  "dependencies": {
+    "line-awesome": "^1.3.0",
+    "typescript": "^5.2.2"
+  }
+}
