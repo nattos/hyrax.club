@@ -1,23 +1,10 @@
-import 'line-awesome/dist/line-awesome/css/line-awesome.css';
 import { css, html, LitElement } from 'lit';
 import {} from 'lit/html';
 import { customElement, query, queryAll } from 'lit/decorators.js';
 
-function getLineAwesomeStylesheet() {
-  const styleElements = Array.from(document.head.querySelectorAll('style').values()) as HTMLStyleElement[];
-  return toStyleSheet(styleElements[0]);
-}
-
-function toStyleSheet(styleElement: HTMLStyleElement): CSSStyleSheet {
-  const styleSheet = new CSSStyleSheet();
-  styleSheet.replaceSync(styleElement.innerText);
-  return styleSheet;
-}
-
 @customElement('hyrax-app')
 export class App extends LitElement {
   static styles = [
-    getLineAwesomeStylesheet(),
     css`
 body, :host {
   background: black;
@@ -28,7 +15,7 @@ body, :host {
 }
 
 :host {
-  --gap: calc(max(0px, 100vh - 100vw * 9 / 16));
+  --gap: calc(max(80px, 100vh - 100vw * 9 / 16));
 }
 
 h1 {
@@ -50,6 +37,8 @@ p {
   flex-direction: column;
   gap: var(--gap);
   padding: calc(var(--gap) * 0.5) 0;
+  --width: calc(min(100vw, 100vh * 16 / 9));
+  --horizontal-padding: calc((100vw - var(--width)) / 2);
 }
 
 .foreground {
@@ -85,7 +74,8 @@ p {
 }
 
 .back-video {
-  width: 100vw;
+  width: var(--width);
+  padding-left: var(--horizontal-padding);
 }
 
 @keyframes fade-in {
@@ -103,11 +93,11 @@ p {
   animation-timing-function: ease-out;
 }
 
-.background .fullscreen-button {
-  visibility: hidden;
+.background fullscreen-button {
+  // visibility: hidden;
 }
 @media only screen and (hover: none) {
-  .background .fullscreen-button {
+  .background fullscreen-button {
     visibility: visible;
   }
 }
@@ -116,16 +106,12 @@ p {
   visibility: visible;
 }
 
-.fullscreen-button {
+fullscreen-button {
   position: absolute;
-  right: 0.5em;
+  right: calc(0.5em + var(--horizontal-padding));
   bottom: 0.5em;
-  padding: 0.45em;
-  font-size: 150%;
-  cursor: pointer;
-  user-select: none;
 }
-.fullscreen-button:hover {
+fullscreen-button:hover {
   background-color: rgba(0, 0, 0, 0.6);
 }
 `];
@@ -138,7 +124,31 @@ p {
 
   private scrollLockTimeout?: number;
 
+  private lastNonFullscreenScrollY = 0;
+  private wasFullscreen = false;
+  private isFullscreenCooldown = false;
+  private fullscreenCooldownStart = 0;
+
   private onScroll() {
+    if (this.wasFullscreen) {
+      if (document.fullscreenElement) {
+        return;
+      }
+      this.wasFullscreen = false;
+      this.isFullscreenCooldown = true;
+      this.fullscreenCooldownStart = Date.now();
+    }
+    if (this.isFullscreenCooldown) {
+      const nowTime = Date.now();
+      const elapsed = nowTime - this.fullscreenCooldownStart;
+      if (elapsed > 500) {
+        this.isFullscreenCooldown = false;
+      } else {
+        this.scrollContainer.scrollTop = this.lastNonFullscreenScrollY;
+        return;
+      }
+    }
+    this.lastNonFullscreenScrollY = this.scrollContainer.scrollTop;
     const viewportCenter = getCenterY(this.scrollContainer.getBoundingClientRect());
 
     if (this.currentContentPanel !== this.allContentPanels.item(this.currentContentPanelIndex)) {
@@ -260,7 +270,9 @@ p {
     const videoElement = searchNode.querySelector('video');
     if (videoElement) {
       (screen.orientation as any).lock?.('landscape');
-      videoElement.requestFullscreen();
+      videoElement.requestFullscreen().then(() => {
+        this.wasFullscreen = true;
+      });
     }
   }
 
@@ -287,8 +299,8 @@ p {
       </div>
     </div>
     <div class="background">
-      <video class="back-video" autoplay loop muted src="hyrax.club.mp4"></video>
-      <div class="fullscreen-button las la-expand" @click=${(e: Event) => this.doFullscreenContent(e.target as HTMLElement)}></div>
+      <video class="back-video" autoplay loop muted src="assets/hyrax.club.mp4"></video>
+      <fullscreen-button @click=${(e: Event) => this.doFullscreenContent(e.target as HTMLElement)} />
     </div>
   </div>
   <div class="content-panel">
@@ -302,8 +314,8 @@ p {
       </div>
     </div>
     <div class="background">
-      <video class="back-video" autoplay loop muted src="a music community.mp4"></video>
-      <div class="fullscreen-button las la-expand" @click=${(e: Event) => this.doFullscreenContent(e.target as HTMLElement)}></div>
+      <video class="back-video" autoplay loop muted src="assets/a music community.mp4"></video>
+      <fullscreen-button @click=${(e: Event) => this.doFullscreenContent(e.target as HTMLElement)} />
     </div>
   </div>
   <div class="content-panel">
@@ -318,8 +330,8 @@ p {
       </div>
     </div>
     <div class="background">
-      <video class="back-video" autoplay loop muted src="a live visuals community.mp4"></video>
-      <div class="fullscreen-button las la-expand" @click=${(e: Event) => this.doFullscreenContent(e.target as HTMLElement)}></div>
+      <video class="back-video" autoplay loop muted src="assets/a live visuals community.mp4"></video>
+      <fullscreen-button @click=${(e: Event) => this.doFullscreenContent(e.target as HTMLElement)} />
     </div>
   </div>
   <div class="content-panel">
@@ -334,8 +346,8 @@ p {
       </div>
     </div>
     <div class="background">
-      <video class="back-video" autoplay loop muted src="a community for learning.mp4"></video>
-      <div class="fullscreen-button las la-expand" @click=${(e: Event) => this.doFullscreenContent(e.target as HTMLElement)}></div>
+      <video class="back-video" autoplay loop muted src="assets/a community for learning.mp4"></video>
+      <fullscreen-button @click=${(e: Event) => this.doFullscreenContent(e.target as HTMLElement)} />
     </div>
   </div>
   <div class="content-panel">
@@ -349,8 +361,8 @@ p {
       </div>
     </div>
     <div class="background">
-      <video class="back-video" autoplay loop muted src="an event group.mp4"></video>
-      <div class="fullscreen-button las la-expand" @click=${(e: Event) => this.doFullscreenContent(e.target as HTMLElement)}></div>
+      <video class="back-video" autoplay loop muted src="assets/an event group.mp4"></video>
+      <fullscreen-button @click=${(e: Event) => this.doFullscreenContent(e.target as HTMLElement)} />
     </div>
   </div>
   <div class="content-panel">
@@ -365,11 +377,65 @@ p {
       </div>
     </div>
     <div class="background">
-      <video class="back-video" autoplay loop muted src="a safe place to try new things.mp4"></video>
-      <div class="fullscreen-button las la-expand" @click=${(e: Event) => this.doFullscreenContent(e.target as HTMLElement)}></div>
+      <video class="back-video" autoplay loop muted src="assets/a safe place to try new things.mp4"></video>
+      <fullscreen-button @click=${(e: Event) => this.doFullscreenContent(e.target as HTMLElement)} />
     </div>
   </div>
 </div>
+`;
+  }
+}
+
+@customElement('fullscreen-button')
+export class FullscreenButton extends LitElement {
+  static styles = css`
+:host {
+  --icon-padding: 0.45em;
+  padding: 0.45em;
+  width: 1em;
+  height: 1em;
+  font-size: 150%;
+  cursor: pointer;
+  user-select: none;
+}
+
+.corner00, .corner01, .corner10, .corner11 {
+  position: absolute;
+  width: calc(60% - var(--icon-padding) * 2);
+  height: calc(60% - var(--icon-padding) * 2);
+}
+.corner00 {
+  border-top: 1.5px solid white;
+  border-left: 1.5px solid white;
+  left: var(--icon-padding);
+  top: var(--icon-padding);
+}
+.corner01 {
+  border-top: 1.5px solid white;
+  border-right: 1.5px solid white;
+  right: var(--icon-padding);
+  top: var(--icon-padding);
+}
+.corner10 {
+  border-bottom: 1.5px solid white;
+  border-left: 1.5px solid white;
+  left: var(--icon-padding);
+  bottom: var(--icon-padding);
+}
+.corner11 {
+  border-bottom: 1.5px solid white;
+  border-right: 1.5px solid white;
+  right: var(--icon-padding);
+  bottom: var(--icon-padding);
+}
+`;
+
+  protected render() {
+    return html`
+<div class="corner00"></div>
+<div class="corner01"></div>
+<div class="corner10"></div>
+<div class="corner11"></div>
 `;
   }
 }
