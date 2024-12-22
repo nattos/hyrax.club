@@ -122,6 +122,7 @@ fullscreen-button:hover {
   transform: translate(-50%, -200%);
   color: rgba(255, 255, 255, 0.35);
   filter: blur(0.3px);
+  z-index: 1;
 
   opacity: 0;
   animation-name: fade-in;
