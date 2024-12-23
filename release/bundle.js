@@ -331,9 +331,12 @@ simple-button {
   pointer-events: all;
   background-color: rgba(0, 0, 0, 0.6);
 }
-@media not(only screen and (hover: none)) {
+simple-button:hover {
+  opacity: 0.6;
+}
+@media only screen and (hover: none) {
   simple-button:hover {
-    opacity: 0.6;
+    opacity: unset;
   }
 }
 
