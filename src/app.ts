@@ -11,11 +11,10 @@ body, :host {
   color: white;
   margin: 0;
   font-family: Questrial, "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: calc(max(10px, min(18px, 1.5vw)));
+  font-size: calc(max(10px, min(18px, min(1.5vw, 1.5vh))));
 }
 
 :host {
-  --gap: calc(max(80px, 100vh - 100vw * 9 / 16));
 }
 
 h1 {
@@ -30,29 +29,52 @@ p {
 }
 
 .outer-scroll-container {
-  position: fixed;
-  inset: 0;
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: var(--gap);
-  padding: calc(var(--gap) * 0.5) 0;
   --width: calc(min(100vw, 100vh * 16 / 9));
-  --horizontal-padding: calc((100vw - var(--width)) / 2);
+  --height: calc(max(100vh, var(--width) * 9 / 16));
+  --vertical-padding: calc((100vh - var(--width) * 9 / 16) / 2);
+  --horizontal-padding: calc((100vw - var(--width)) / 4);
+  --page-padding: 20vh;
+  padding-top: var(--page-padding);
+}
+
+.content-panel {
+  position: relative;
+  height: calc(80vh);
+  pointer-events: none;
+}
+.focused.content-panel {
+  pointer-events: unset;
+}
+.content-panel::before, .content-panel::after {
+  display: block;
+  position: absolute;
+  top: calc(var(--height) - var(--vertical-padding) - var(--page-padding));
+  transform: translate(0, calc(var(--height) * -0.025));
+  left: 0;
+  height: 2px;
+  width: 0.8em;
+  background-color: white;
+  content: ' ';
+  z-index: 1;
+}
+.content-panel::after {
+  transform: translate(0, calc(var(--height) * -0.105));
+  width: 0.6em;
 }
 
 .foreground {
   position: fixed;
-  inset: 0;
+  inset: var(--vertical-padding) 0;
   pointer-events: none;
   opacity: 0;
-  z-index: 1;
+  z-index: 2;
 }
 
 .foreground-content {
   position: absolute;
   inset: 0;
-  margin: calc(var(--gap) * 0.5) 0;
 }
 
 .text-block {
@@ -65,12 +87,18 @@ p {
   gap: 0.5em;
 
   position: absolute;
-  bottom: 10%;
+  bottom: 5%;
 }
 
 .background {
-  position: relative;
+  position: fixed;
+  inset: var(--vertical-padding) var(--horizontal-padding);
+  z-index: 0;
   opacity: 0;
+  pointer-events: none;
+}
+.focused .background {
+  pointer-events: all;
 }
 
 .back-video {
@@ -89,6 +117,7 @@ p {
 .faded-in {
   animation-name: fade-in;
   animation-duration: 0.2s;
+  animation-delay: 0.4s;
   animation-fill-mode: both;
   animation-timing-function: ease-out;
 }
@@ -119,10 +148,12 @@ fullscreen-button:hover {
   position: absolute;
   left: 50%;
   top: 100vh;
-  transform: translate(-50%, -200%);
+  transform: translate(-50%, -300%);
   color: rgba(255, 255, 255, 0.35);
   filter: blur(0.3px);
   z-index: 1;
+  user-select: none;
+  pointer-events: none;
 
   opacity: 0;
   animation-name: fade-in;
@@ -135,9 +166,10 @@ fullscreen-button:hover {
 
   @property({ attribute: false }) didScroll = false;
 
-  @query('.outer-scroll-container') scrollContainer!: HTMLElement;
+  private scrollElement: HTMLElement = document.scrollingElement as HTMLElement;
   @queryAll('.content-panel') allContentPanels!: NodeListOf<HTMLElement>;
   private currentContentPanel?: HTMLElement;
+  private previousContentPanel?: HTMLElement;
   private currentContentPanelIndex = -1;
   private currentLockedPanel?: HTMLElement;
 
@@ -147,6 +179,11 @@ fullscreen-button:hover {
   private wasFullscreen = false;
   private isFullscreenCooldown = false;
   private fullscreenCooldownStart = 0;
+
+  connectedCallback() {
+    super.connectedCallback();
+    document.addEventListener('scroll', () => this.onScroll());
+  }
 
   private onScroll() {
     if (this.wasFullscreen) {
@@ -163,13 +200,13 @@ fullscreen-button:hover {
       if (elapsed > 500) {
         this.isFullscreenCooldown = false;
       } else {
-        this.scrollContainer.scrollTop = this.lastNonFullscreenScrollY;
+        this.scrollElement.scrollTop = this.lastNonFullscreenScrollY;
         return;
       }
     }
-    this.lastNonFullscreenScrollY = this.scrollContainer.scrollTop;
-    const viewportCenter = getCenterY(this.scrollContainer.getBoundingClientRect());
-    if (this.scrollContainer.scrollTop > viewportCenter) {
+    this.lastNonFullscreenScrollY = this.scrollElement.scrollTop;
+    const { viewportHeight, viewportCenter } = getViewportLayout();
+    if (this.scrollElement.scrollTop > viewportCenter) {
       this.didScroll = true;
     }
 
@@ -196,51 +233,45 @@ fullscreen-button:hover {
     if (this.currentContentPanel === undefined) {
       return;
     }
-
-    clearTimeout(this.scrollLockTimeout);
-    this.scrollLockTimeout = setTimeout(() => {
-      const viewportRect = this.scrollContainer.getBoundingClientRect();
-      const viewportHeight = viewportRect.height;
-      const viewportCenter = getCenterY(viewportRect);
-      const delta = getPanelDelta(this.currentContentPanel, viewportCenter);
-      // const dist = Math.abs(delta);
-      // if (dist > viewportHeight * 0.2) {
-      //   return;
-      // }
-
-      this.scrollContainer.scrollBy({ top: -delta, behavior: 'smooth' });
-      this.lockPanel(this.currentContentPanel);
-    }, 100, undefined);
-
     requestAnimationFrame(() => this.updateScroll());
   }
 
   private updateScroll() {
+    if (this.currentContentPanel !== this.previousContentPanel) {
+      if (this.previousContentPanel) {
+        const foregroundElement = this.previousContentPanel.querySelector('.foreground');
+        // const backgroundElement = this.previousContentPanel.querySelector('.background');
+        if (foregroundElement) {
+          (foregroundElement as HTMLElement).style.opacity = '0';
+        }
+        this.previousContentPanel.classList.remove('focused');
+      }
+      this.previousContentPanel = this.currentContentPanel;
+    }
     if (!this.currentContentPanel) {
       this.unlockPanel();
       return;
     }
-    const viewportRect = this.scrollContainer.getBoundingClientRect();
-    const viewportHeight = viewportRect.height;
-    const viewportCenter = getCenterY(viewportRect);
+    this.currentContentPanel.classList.add('focused');
+
+    const { viewportHeight, viewportCenter } = getViewportLayout();
     const delta = getPanelDelta(this.currentContentPanel, viewportCenter);
     const dist = Math.abs(delta);
-    const alpha = Math.max(0, Math.min(1, (1 - (dist / (viewportHeight * 0.3)) + 0.7)));
-    // const alphaTight = Math.max(0, Math.min(1, (1 - (dist / (viewportHeight * 0.1)) + 0.2)));
+    // const alpha = Math.max(0, Math.min(1, (1 - (dist / (viewportHeight * 0.2)) + 0.3)));
+    const alphaTight = Math.max(0, Math.min(1, (1 - (dist / (viewportHeight * 0.1)) + 2.7)));
 
-    // const foregroundElement = this.currentContentPanel.querySelector('.foreground');
+    const foregroundElement = this.currentContentPanel.querySelector('.foreground');
+    if (foregroundElement) {
+      (foregroundElement as HTMLElement).style.transform = `translate(0, ${CSS.px(delta * -0.1)})`;
+      // (foregroundElement as HTMLElement).style.opacity = `${alphaTight.toFixed(4)}`;
+    }
     const backgroundElement = this.currentContentPanel.querySelector('.background');
     // if (foregroundElement) {
-    //   (foregroundElement as HTMLElement).style.opacity = `${alphaTight.toFixed(4)}`;
     // }
-    if (backgroundElement) {
-      (backgroundElement as HTMLElement).style.opacity = `${alpha.toFixed(4)}`;
-    }
-    if (dist < 5) {
-      this.lockPanel(this.currentContentPanel);
-    } else {
-      this.unlockPanel();
-    }
+    // if (backgroundElement) {
+    //   (backgroundElement as HTMLElement).style.opacity = `${alpha.toFixed(4)}`;
+    // }
+    this.lockPanel(this.currentContentPanel);
   }
 
   private lockPanel(panel: HTMLElement|null|undefined) {
@@ -252,30 +283,16 @@ fullscreen-button:hover {
     if (!this.currentLockedPanel) {
       return;
     }
-    const foreground = this.currentLockedPanel.querySelector('.foreground');
-    if (foreground) {
-      foreground.classList.add('faded-in');
-      for (const anim of foreground.getAnimations() as CSSAnimation[]) {
-        if (anim.animationName === 'fade-in') {
-          anim.playbackRate = 1;
-        }
-      }
-    }
+    setFadedIn(this.currentLockedPanel.querySelector('.foreground'), true);
+    setFadedIn(this.currentLockedPanel.querySelector('.background'), true);
   }
 
   private unlockPanel() {
     if (!this.currentLockedPanel) {
       return;
     }
-    const foreground = this.currentLockedPanel.querySelector('.foreground');
-    this.currentLockedPanel = undefined;
-    if (foreground) {
-      for (const anim of foreground.getAnimations() as CSSAnimation[]) {
-        if (anim.animationName === 'fade-in') {
-          anim.playbackRate = -1;
-        }
-      }
-    }
+    setFadedIn(this.currentLockedPanel.querySelector('.foreground'), false);
+    setFadedIn(this.currentLockedPanel.querySelector('.background'), false);
   }
 
   private doFullscreenContent(element: HTMLElement) {
@@ -304,7 +321,7 @@ fullscreen-button:hover {
 
   render() {
     return html`
-<div class="outer-scroll-container" @scroll=${() => this.onScroll()}>
+<div class="outer-scroll-container">
   <div class="scroll-indicator" ?hidden=${this.didScroll}>scroll-for-more</div>
   <div class="content-panel">
     <div class="foreground">
@@ -451,16 +468,29 @@ export class FullscreenButton extends LitElement {
   right: var(--icon-padding);
   bottom: var(--icon-padding);
 }
+.touch {
+  position: absolute;
+  inset: -1em;
+  background-color: transparent;
+}
 `;
 
   protected render() {
     return html`
+<div class="touch"></div>
 <div class="corner00"></div>
 <div class="corner01"></div>
 <div class="corner10"></div>
 <div class="corner11"></div>
 `;
   }
+}
+
+function getViewportLayout(): { viewportHeight: number; viewportCenter: number; } {
+  if (!window.visualViewport) {
+    return { viewportCenter: 0, viewportHeight: 0 };
+  }
+  return { viewportCenter: window.visualViewport.height / 2 + window.visualViewport.offsetTop, viewportHeight: window.visualViewport.height };
 }
 
 function getPanelDelta(panel: HTMLElement|null|undefined, viewportCenter: number) {
@@ -472,4 +502,18 @@ function getPanelDelta(panel: HTMLElement|null|undefined, viewportCenter: number
 
 function getCenterY(rect: DOMRect): number {
   return rect.y + rect.height * 0.5;
+}
+
+function setFadedIn(foreground: Element|null|undefined, fadedIn: boolean) {
+  if (!foreground) {
+    return;
+  }
+  if (fadedIn) {
+    foreground.classList.add('faded-in');
+  }
+  for (const anim of foreground.getAnimations() as CSSAnimation[]) {
+    if (anim.animationName === 'fade-in') {
+      anim.playbackRate = fadedIn ? 1 : -1;
+    }
+  }
 }
