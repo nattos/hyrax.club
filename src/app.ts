@@ -13,8 +13,14 @@ body, :host {
   font-family: Questrial, "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: calc(max(10px, min(18px, min(1.5vw, 1.5vh))));
 }
+@media only screen and (hover: none) {
+  :host {
+    font-size: calc(max(10px, min(32px, min(4vw, 4vh))));;
+  }
+}
 
 :host {
+  --language-flip: 0.0;
 }
 
 h1 {
@@ -71,6 +77,11 @@ p {
   opacity: 0;
   z-index: 2;
 }
+@media only screen and (hover: none) {
+  .foreground {
+    bottom: 5em;
+  }
+}
 
 .foreground-content {
   position: absolute;
@@ -81,13 +92,36 @@ p {
   display: flex;
   flex-direction: column;
   width: fit-content;
-  max-width: 30em;
+  max-width: calc(min(100vw, 30em));
   background-color: rgba(0, 0, 0, 0.6);
   padding: 1em;
   gap: 0.5em;
 
   position: absolute;
   bottom: 5%;
+}
+
+.hanging-buttons {
+  position: fixed;
+  left: 0.5em;
+  bottom: 0.5em;
+  display: flex;
+  gap: 0.5em;
+  z-index: 5;
+}
+@media only screen and (hover: none) {
+  .hanging-buttons {
+    bottom: 2em;
+  }
+}
+.hanging-button {
+  color: #adadad;
+}
+.is-flipped .hanging-button.unflipped {
+  color: #707070;
+}
+.is-unflipped .hanging-button.flipped {
+  color: #707070;
 }
 
 .background {
@@ -107,7 +141,7 @@ p {
 }
 
 @keyframes fade-in {
-  to {
+  from {
     opacity: 0;
   }
   to {
@@ -144,11 +178,19 @@ fullscreen-button:hover {
   background-color: rgba(0, 0, 0, 0.6);
 }
 
+simple-button {
+  pointer-events: all;
+  background-color: rgba(0, 0, 0, 0.6);
+}
+simple-button:hover {
+  opacity: 0.6;
+}
+
 .scroll-indicator {
   position: absolute;
   left: 50%;
   top: 100vh;
-  transform: translate(-50%, -300%);
+  transform: translate(-50%, calc(-200% - var(--vertical-padding) * 0.5));
   color: rgba(255, 255, 255, 0.35);
   filter: blur(0.3px);
   z-index: 1;
@@ -162,27 +204,109 @@ fullscreen-button:hover {
   animation-timing-function: ease-out;
   animation-delay: 5s;
 }
+
+.fade-shade-container {
+  position: relative;
+  width: fit-content;
+  height: fit-content;
+}
+.fade-shade {
+  --t: calc(1 - var(--language-flip));
+  mask-image: linear-gradient(to bottom, white 0%, white calc(100% * var(--t)), transparent calc(100% * var(--t)), transparent 100%);
+  mask-size: 1px 1lh;
+  mask-repeat: repeat;
+  mask-position: top;
+}
+.fade-shade.flipped {
+  position: absolute;
+  inset: 0;
+  mask-image: linear-gradient(to bottom, transparent 0%, transparent calc(100% * var(--t)), white calc(100% * var(--t)), white 100%);
+}
+.is-flipped .fade-shade {
+  position: absolute;
+  inset: 0;
+}
+.is-flipped .fade-shade.flipped {
+  position: unset;
+}
 `];
 
   @property({ attribute: false }) didScroll = false;
 
   private scrollElement: HTMLElement = document.scrollingElement as HTMLElement;
+  @query('.outer-scroll-container') outerContainer!: HTMLElement;
   @queryAll('.content-panel') allContentPanels!: NodeListOf<HTMLElement>;
   private currentContentPanel?: HTMLElement;
   private previousContentPanel?: HTMLElement;
   private currentContentPanelIndex = -1;
   private currentLockedPanel?: HTMLElement;
 
-  private scrollLockTimeout?: number;
-
   private lastNonFullscreenScrollY = 0;
   private wasFullscreen = false;
   private isFullscreenCooldown = false;
   private fullscreenCooldownStart = 0;
 
+  private isFlipped = false;
+  private flipIsRunning = false;
+  private flipT = 0.0;
+  private flipTarget = false;
+
   connectedCallback() {
     super.connectedCallback();
     document.addEventListener('scroll', () => this.onScroll());
+  }
+
+  private doSelectEn() {
+    this.flipTarget = false;
+    this.runFlip();
+  }
+
+  private doSelectJp() {
+    this.flipTarget = true;
+    this.runFlip();
+  }
+
+  private runFlip() {
+    if (this.flipIsRunning) {
+      return;
+    }
+    this.flipIsRunning = true;
+
+    const duration = 180.0;
+    let t = this.isFlipped ? 1.0 : 0.0;
+    let prevTime = Date.now();
+    const doAnimate = () => {
+      const nowTime = Date.now();
+      const deltaTime = nowTime - prevTime;
+      prevTime = nowTime;
+      let ended = false;
+      if (this.flipTarget) {
+        t += deltaTime / duration;
+        if (t > 1.0) {
+          t = 1.0;
+          ended = true;
+        }
+      } else {
+        t -= deltaTime / duration;
+        if (t < 0.0) {
+          t = 0.0;
+          ended = true;
+        }
+      }
+
+      this.outerContainer.attributeStyleMap.set('--language-flip', t.toFixed(4));
+      if (ended) {
+        this.flipIsRunning = false;
+        this.isFlipped = this.flipTarget;
+        const newClass = this.flipTarget ? 'is-flipped' : 'is-unflipped';
+        const oldClass = this.flipTarget ? 'is-unflipped' : 'is-flipped';
+        this.outerContainer.classList.add(newClass);
+        this.outerContainer.classList.remove(oldClass);
+      } else {
+        requestAnimationFrame(doAnimate);
+      }
+    };
+    doAnimate();
   }
 
   private onScroll() {
@@ -308,9 +432,13 @@ fullscreen-button:hover {
     }
     const videoElement = searchNode.querySelector('video');
     if (videoElement) {
-      (screen.orientation as any).lock?.('landscape');
-      videoElement.requestFullscreen().then(() => {
+      videoElement.requestFullscreen().then(async () => {
         this.wasFullscreen = true;
+        try {
+          await (screen.orientation as any).lock?.('landscape-primary');
+        } catch (e) {
+          console.error(e);
+        }
       });
     }
   }
@@ -321,20 +449,26 @@ fullscreen-button:hover {
 
   render() {
     return html`
-<div class="outer-scroll-container">
+<div class="outer-scroll-container is-unflipped">
   <div class="scroll-indicator" ?hidden=${this.didScroll}>scroll-for-more</div>
+  <div class="hanging-buttons">
+    <simple-button class="hanging-button unflipped" @click=${() => this.doSelectEn()}>en</simple-button>
+    <simple-button class="hanging-button flipped" @click=${() => this.doSelectJp()}>jp</simple-button>
+  </div>
   <div class="content-panel">
     <div class="foreground">
       <div class="foreground-content">
         <div class="text-block">
           <h1>hyrax.club</h1>
-          <p>
-            we do events
-            <br>
-            we teach people
-            <br>
-            we combine music, visuals, and technology
-          </p>
+          <div class="fade-shade-container">
+            <p>
+              we do events
+              <br>
+              we teach people
+              <br>
+              we combine music, visuals, and technology
+            </p>
+          </div>
         </div>
       </div>
     </div>
@@ -348,8 +482,14 @@ fullscreen-button:hover {
       <div class="foreground-content">
         <div class="text-block">
           <h1>a music community</h1>
-          <p>Hyrax covers a broad range of music styles, from underground electronic music to not traditionally club-styles like orchestral and acoustic music</p>
-          <p>We seek to build deeper connections with the music by interacting with it through DJ techniques and live performances</p>
+          <div class="fade-shade-container">
+            <p class="fade-shade">Hyrax covers a broad range of music styles, from underground electronic music to not traditionally club-styles like orchestral and acoustic music</p>
+            <p class="fade-shade flipped">Hyraxはアンダーグラウンドな電子音楽から、クラブスタイルではないオーケストラ、アコースティック音楽まで、幅広い音楽スタイルをカバー。</p>
+          </div>
+          <div class="fade-shade-container">
+            <p class="fade-shade">We seek to build deeper connections with the music by interacting with it through DJ techniques and live performances</p>
+            <p class="fade-shade flipped">DJテクニックやライブパフォーマンスを通じて、音楽とのより深い繋がりを探求している。</p>
+          </div>
         </div>
       </div>
     </div>
@@ -363,9 +503,18 @@ fullscreen-button:hover {
       <div class="foreground-content">
         <div class="text-block">
           <h1>a live visual community</h1>
-          <p>Hyrax sees visuals as just as important as music</p>
-          <p>We combine code and technology to create live visuals that capture the essence of the moment - rhythm and mood</p>
-          <p>Audio reactivity, custom built software, and live control surfaces like midi controllers are key ingredients</p>
+          <div class="fade-shade-container">
+            <p class="fade-shade">Hyrax sees visuals as just as important as music</p>
+            <p class="fade-shade flipped">Hyraxではヴィジュアルは音楽と同等に重要と考えている。</p>
+          </div>
+          <div class="fade-shade-container">
+            <p class="fade-shade">We combine code and technology to create live visuals that capture the essence of the moment - rhythm and mood</p>
+            <p class="fade-shade flipped">コードとテクノロジーを駆使して、リズムとムードのエッセンスになるライブヴィジュアルを創造する。</p>
+          </div>
+          <div class="fade-shade-container">
+            <p class="fade-shade">Audio reactivity, custom built software, and live control surfaces like midi controllers are key ingredients</p>
+            <p class="fade-shade flipped">音とのシンクロ、カスタムされたソフトウェア、MIDIコントローラーなどのライブコントロールサーフェスが重要な要素となる。</p>
+          </div>
         </div>
       </div>
     </div>
@@ -379,9 +528,18 @@ fullscreen-button:hover {
       <div class="foreground-content">
         <div class="text-block">
           <h1>a community for learning</h1>
-          <p>Hyrax is a place where adventurous people can learn new skills, and also share their insights with others</p>
-          <p>Most of our members have learned their music and visuals skills from scratch through our group</p>
-          <p>Many members eventually end up trying new skills - DJs might try VJing, or the other way around</p>
+          <div class="fade-shade-container">
+            <p class="fade-shade">Hyrax is a place where adventurous people can learn new skills, and also share their insights with others</p>
+            <p class="fade-shade flipped">Hyrax は、冒険好きな人々が新しいスキルを学び、他の人と考察を共有できる場所だ。</p>
+          </div>
+          <div class="fade-shade-container">
+            <p class="fade-shade">Most of our members have learned their music and visuals skills from scratch through our group</p>
+            <p class="fade-shade flipped">メンバーのほとんどは、グループでの活動を通じて音楽とビジュアルのスキルをゼロから学んでいる。</p>
+          </div>
+          <div class="fade-shade-container">
+            <p class="fade-shade">Many members eventually end up trying new skills - DJs might try VJing, or the other way around</p>
+            <p class="fade-shade flipped">多くのメンバーは最終的に新しいスキルに挑戦する。DJはVJに挑戦したり、その逆もあるかもしれない。</p>
+          </div>
         </div>
       </div>
     </div>
@@ -395,8 +553,14 @@ fullscreen-button:hover {
       <div class="foreground-content">
         <div class="text-block">
           <h1>an event group</h1>
-          <p>Key to making hyrax work is our events</p>
-          <p>Hyrax organizes regular events at real clubs - performers use this opportunity to try new skills, but also as a call-to-action, with everyone rallying around this common objective</p>
+          <div class="fade-shade-container">
+            <p class="fade-shade">Key to making hyrax work is our events</p>
+            <p class="fade-shade flipped">Hyraxを機能させるための鍵となるのはイベントだ。</p>
+          </div>
+          <div class="fade-shade-container">
+            <p class="fade-shade">Hyrax organizes regular events at real clubs - performers use this opportunity to try new skills, but also as a call-to-action, with everyone rallying around this common objective</p>
+            <p class="fade-shade flipped">Hyraxは実際のクラブで定期的にイベントを開催している。パフォーマーはこの機会を利用して新しいスキルを試すだけでなく、全員が共通の目的に結集するための行動喚起をする場としても利用する。</p>
+          </div>
         </div>
       </div>
     </div>
@@ -410,9 +574,18 @@ fullscreen-button:hover {
       <div class="foreground-content">
         <div class="text-block">
           <h1>a safe place to try new things</h1>
-          <p>Hyrax more than anything believes in creating a space where new and old members can try new skills</p>
-          <p>Most of our members never thought they would perform at real events - for many, Hyrax is their first event ever</p>
-          <p>We strive to keep our community vibrant and inviting, even as we grow and become more diverse</p>
+          <div class="fade-shade-container">
+            <p class="fade-shade">Hyrax more than anything believes in creating a space where new and old members can try new skills</p>
+            <p class="fade-shade flipped">Hyrax は、新旧メンバーが新しいスキルに挑戦できるスペースを作り上げることを信条としている。</p>
+          </div>
+          <div class="fade-shade-container">
+            <p class="fade-shade">Most of our members never thought they would perform at real events - for many, Hyrax is their first event ever</p>
+            <p class="fade-shade flipped">メンバーのほとんどは、実際のイベントでパフォーマンスをすることになるとは思っていなかったが、その多くがHyraxが初めてのイベント出演となった。</p>
+          </div>
+          <div class="fade-shade-container">
+            <p class="fade-shade">We strive to keep our community vibrant and inviting, even as we grow and become more diverse</p>
+            <p class="fade-shade flipped">私たちは、成長し多様性が増しても、コミュニティを活気に満ちた魅力的なものに保つよう励んでいる。</p>
+          </div>
         </div>
       </div>
     </div>
@@ -482,6 +655,33 @@ export class FullscreenButton extends LitElement {
 <div class="corner01"></div>
 <div class="corner10"></div>
 <div class="corner11"></div>
+`;
+  }
+}
+
+@customElement('simple-button')
+export class SimpleButton extends LitElement {
+  static styles = css`
+:host {
+  padding: 0.45em;
+  width: 1em;
+  height: 1em;
+  font-size: 150%;
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+}
+.touch {
+  position: absolute;
+  inset: -0.25em;
+  background-color: transparent;
+}
+`;
+
+  protected render() {
+    return html`
+<div class="touch"></div>
+<slot></slot>
 `;
   }
 }
