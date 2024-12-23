@@ -172,7 +172,15 @@ p {
 fullscreen-button {
   position: absolute;
   right: calc(0.5em + var(--horizontal-padding));
-  bottom: 0.5em;
+  bottom: -0.5em;
+}
+@media only screen and (hover: none) {
+  fullscreen-button {
+    position: relative;
+    right: calc(-100vw + 2.5em + var(--horizontal-padding) * 3);
+    bottom: 2.5em;
+    display: block;
+  }
 }
 fullscreen-button:hover {
   background-color: rgba(0, 0, 0, 0.6);
