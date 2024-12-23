@@ -331,15 +331,17 @@ simple-button {
   pointer-events: all;
   background-color: rgba(0, 0, 0, 0.6);
 }
-simple-button:hover {
-  opacity: 0.6;
+@media not(only screen and (hover: none)) {
+  simple-button:hover {
+    opacity: 0.6;
+  }
 }
 
 .scroll-indicator {
   position: absolute;
   left: 50%;
   top: 100vh;
-  transform: translate(-50%, calc(-200% - var(--vertical-padding) * 0.5));
+  transform: translate(-50%, calc(-200% - 2em));
   color: rgba(255, 255, 255, 0.35);
   filter: blur(0.3px);
   z-index: 1;
@@ -352,6 +354,11 @@ simple-button:hover {
   animation-fill-mode: both;
   animation-timing-function: ease-out;
   animation-delay: 5s;
+}
+@media only screen and (hover: none) {
+  .scroll-indicator {
+    transform: translate(-50%, calc(-200% - 4em));
+  }
 }
 
 .fade-shade-container {
