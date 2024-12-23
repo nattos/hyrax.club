@@ -61,7 +61,7 @@ p {
   left: 0;
   height: 2px;
   width: 0.8em;
-  background-color: white;
+  background-color: #adadad;
   content: ' ';
   z-index: 1;
 }
@@ -172,7 +172,7 @@ p {
 fullscreen-button {
   position: absolute;
   right: calc(0.5em + var(--horizontal-padding));
-  bottom: -0.5em;
+  bottom: 0.5em;
 }
 @media only screen and (hover: none) {
   fullscreen-button {
@@ -223,6 +223,21 @@ simple-button:hover {
   }
 }
 
+.scrolly-bar {
+  position: fixed;
+  left: 0;
+  width: 2px;
+  height: 2px;
+  bottom: 0;
+  background-color: #adadad;
+  z-index: 1;
+}
+@media only screen and (hover: none) {
+  .scrolly-bar {
+    bottom: 10px;
+  }
+}
+
 .fade-shade-container {
   position: relative;
   width: fit-content;
@@ -254,6 +269,7 @@ simple-button:hover {
   private scrollElement: HTMLElement = document.scrollingElement as HTMLElement;
   @query('.outer-scroll-container') outerContainer!: HTMLElement;
   @queryAll('.content-panel') allContentPanels!: NodeListOf<HTMLElement>;
+  @queryAll('.scrolly-bar') allScrollyBars!: NodeListOf<HTMLElement>;
   private currentContentPanel?: HTMLElement;
   private previousContentPanel?: HTMLElement;
   private currentContentPanelIndex = -1;
@@ -290,7 +306,7 @@ simple-button:hover {
     }
     this.flipIsRunning = true;
 
-    const duration = 180.0;
+    const duration = 350.0;
     let t = this.isFlipped ? 1.0 : 0.0;
     let prevTime = Date.now();
     const doAnimate = () => {
@@ -312,7 +328,10 @@ simple-button:hover {
         }
       }
 
-      this.outerContainer.attributeStyleMap.set('--language-flip', t.toFixed(4));
+      const tSigned = t * 2.0 - 1.0;
+      const tSquashSigned = Math.sign(tSigned) * Math.pow(Math.abs(tSigned), 2);
+      const tSquash = Math.max(0.0, Math.min(1.0, tSquashSigned * 0.5 + 0.5));
+      this.outerContainer.attributeStyleMap.set('--language-flip', tSquash.toFixed(4));
       if (ended) {
         this.flipIsRunning = false;
         this.isFlipped = this.flipTarget;
@@ -379,6 +398,7 @@ simple-button:hover {
   }
 
   private updateScroll() {
+    this.updateScrollyBars();
     if (this.currentContentPanel !== this.previousContentPanel) {
       if (this.previousContentPanel) {
         const foregroundElement = this.previousContentPanel.querySelector('.foreground');
@@ -414,6 +434,38 @@ simple-button:hover {
     //   (backgroundElement as HTMLElement).style.opacity = `${alpha.toFixed(4)}`;
     // }
     this.lockPanel(this.currentContentPanel);
+  }
+
+  private updateScrollyBars() {
+    if (!window.visualViewport) {
+      return;
+    }
+    const scrollTop = window.visualViewport.pageTop;
+    const viewportHeight = window.visualViewport.height;
+    const pageHeight = this.outerContainer.clientHeight;
+    const scrollHeight = pageHeight - viewportHeight;
+    if (scrollHeight <= 0) {
+      return;
+    }
+    const t = scrollTop / scrollHeight;
+    const count = this.allScrollyBars.length;
+    const tSquash = Math.tanh(t * 2);
+    const a = 4 * tSquash;
+
+    const ys = new Array<number>(count * 2);
+    let x = 0.2;
+    for (let i = 0; i < count * 2; ++i) {
+      ys[i] = i === 0 ? 0 : Math.pow(x, 0.8);
+      x = a * x * (1 - x);
+    }
+    ys.sort();
+    for (let i = 0; i < count; ++i) {
+      const el = this.allScrollyBars.item(i);
+      const startY = ys[i * 2 + 0];
+      const endY = ys[i * 2 + 1];
+      el.style.left = CSS.vw(startY * 82).toString();
+      el.style.width = CSS.vw((endY - startY) * 82).toString();
+    }
   }
 
   private lockPanel(panel: HTMLElement|null|undefined) {
@@ -469,6 +521,16 @@ simple-button:hover {
     return html`
 <div class="outer-scroll-container is-unflipped">
   <div class="scroll-indicator" ?hidden=${this.didScroll}>scroll-for-more</div>
+  <div>
+    <div class="scrolly-bar"></div>
+    <div class="scrolly-bar"></div>
+    <div class="scrolly-bar"></div>
+    <div class="scrolly-bar"></div>
+    <div class="scrolly-bar"></div>
+    <div class="scrolly-bar"></div>
+    <div class="scrolly-bar"></div>
+    <div class="scrolly-bar"></div>
+  </div>
   <div class="hanging-buttons">
     <simple-button class="hanging-button unflipped" @click=${() => this.doSelectEn()}>en</simple-button>
     <simple-button class="hanging-button flipped" @click=${() => this.doSelectJp()}>jp</simple-button>
