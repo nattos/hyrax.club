@@ -1,3 +1,4 @@
+import * as utils from './utils';
 import { css, html, LitElement } from 'lit';
 import {} from 'lit/html';
 import { customElement, property, query, queryAll } from 'lit/decorators.js';
@@ -186,6 +187,14 @@ fullscreen-button:hover {
   background-color: rgba(0, 0, 0, 0.6);
 }
 
+.background loading-indicator {
+  position: absolute;
+  left: 50%;
+  top: 97%;
+  width: 20vw;
+  transform: translate(-50%, -50%);
+}
+
 simple-button {
   pointer-events: all;
   background-color: rgba(0, 0, 0, 0.6);
@@ -268,6 +277,7 @@ simple-button:hover {
 
   private scrollElement: HTMLElement = document.scrollingElement as HTMLElement;
   @query('.outer-scroll-container') outerContainer!: HTMLElement;
+  @queryAll('video') videoElements!: NodeListOf<HTMLVideoElement>;
   @queryAll('.content-panel') allContentPanels!: NodeListOf<HTMLElement>;
   @queryAll('.scrolly-bar') allScrollyBars!: NodeListOf<HTMLElement>;
   private currentContentPanel?: HTMLElement;
@@ -282,8 +292,9 @@ simple-button:hover {
 
   private isFlipped = false;
   private flipIsRunning = false;
-  private flipT = 0.0;
   private flipTarget = false;
+
+  private readonly preloadVideoQueue: HTMLVideoElement[] = [];
 
   connectedCallback() {
     super.connectedCallback();
@@ -449,22 +460,13 @@ simple-button:hover {
     }
     const t = scrollTop / scrollHeight;
     const count = this.allScrollyBars.length;
-    const tSquash = Math.tanh(t * 2);
-    const a = 4 * tSquash;
-
-    const ys = new Array<number>(count * 2);
-    let x = 0.2;
-    for (let i = 0; i < count * 2; ++i) {
-      ys[i] = i === 0 ? 0 : Math.pow(x, 0.8);
-      x = a * x * (1 - x);
-    }
-    ys.sort();
-    for (let i = 0; i < count; ++i) {
-      const el = this.allScrollyBars.item(i);
-      const startY = ys[i * 2 + 0];
-      const endY = ys[i * 2 + 1];
-      el.style.left = CSS.vw(startY * 82).toString();
-      el.style.width = CSS.vw((endY - startY) * 82).toString();
+    const spans = generateChaosSpans(t, count);
+    let index = 0;
+    for (const { start, end } of spans) {
+      const el = this.allScrollyBars.item(index);
+      el.style.left = CSS.vw(start * 82).toString();
+      el.style.width = CSS.vw((end - start) * 82).toString();
+      index++;
     }
   }
 
@@ -479,6 +481,15 @@ simple-button:hover {
     }
     setFadedIn(this.currentLockedPanel.querySelector('.foreground'), true);
     setFadedIn(this.currentLockedPanel.querySelector('.background'), true);
+
+    const videoElement = this.currentLockedPanel.querySelector('video');
+    if (videoElement) {
+      videoElement.play();
+    }
+    const loadingIndicator = this.currentLockedPanel.querySelector('loading-indicator') as LoadingIndicator;
+    if (loadingIndicator) {
+      loadingIndicator.retrigger();
+    }
   }
 
   private unlockPanel() {
@@ -487,6 +498,46 @@ simple-button:hover {
     }
     setFadedIn(this.currentLockedPanel.querySelector('.foreground'), false);
     setFadedIn(this.currentLockedPanel.querySelector('.background'), false);
+  }
+
+  private async startPreloadVideo() {
+    for (const videoElement of this.preloadVideoQueue) {
+      const findLoadingIndicator = () => videoElement.parentElement?.querySelector('loading-indicator') as LoadingIndicator|null;
+      videoElement.addEventListener('waiting', () => {
+        const loadingIndicator = findLoadingIndicator();
+        if (loadingIndicator) {
+          loadingIndicator.show();
+          loadingIndicator.retrigger();
+        }
+      });
+      videoElement.addEventListener('canplay', () => {
+        const loadingIndicator = findLoadingIndicator();
+        if (loadingIndicator) {
+          loadingIndicator.hide();
+        }
+      });
+    }
+
+    while (this.preloadVideoQueue.length > 0) {
+      const videoElement = this.preloadVideoQueue.shift()!;
+      videoElement.preload = 'auto';
+      videoElement.autoplay = true;
+      if (videoElement.currentTime > 0) {
+        continue;
+      }
+
+      while (true) {
+        await utils.sleep(100);
+        const bufferedRanges = videoElement.buffered;
+        let maxBufferedPos = 0;
+        for (let i = 0; i < bufferedRanges.length; ++i) {
+          maxBufferedPos = Math.max(maxBufferedPos, bufferedRanges.end(i));
+        }
+        if (maxBufferedPos >= videoElement.duration - 0.1) {
+          break;
+        }
+      }
+    }
   }
 
   private doFullscreenContent(element: HTMLElement) {
@@ -515,6 +566,8 @@ simple-button:hover {
 
   protected firstUpdated() {
     this.onScroll();
+    this.preloadVideoQueue.push(...Array.from(this.videoElements));
+    this.startPreloadVideo();
   }
 
   render() {
@@ -553,8 +606,9 @@ simple-button:hover {
       </div>
     </div>
     <div class="background">
-      <video class="back-video" autoplay loop muted src="assets/hyrax.club.mp4"></video>
-      <fullscreen-button @click=${(e: Event) => this.doFullscreenContent(e.target as HTMLElement)} />
+      <video class="back-video" loop muted preload="none" src="assets/hyrax.club.mp4"></video>
+      <loading-indicator></loading-indicator>
+      <fullscreen-button @click=${(e: Event) => this.doFullscreenContent(e.target as HTMLElement)}></fullscreen-button>
     </div>
   </div>
   <div class="content-panel">
@@ -574,8 +628,9 @@ simple-button:hover {
       </div>
     </div>
     <div class="background">
-      <video class="back-video" autoplay loop muted src="assets/a music community.mp4"></video>
-      <fullscreen-button @click=${(e: Event) => this.doFullscreenContent(e.target as HTMLElement)} />
+      <video class="back-video" loop muted preload="none" src="assets/a music community.mp4"></video>
+      <loading-indicator></loading-indicator>
+      <fullscreen-button @click=${(e: Event) => this.doFullscreenContent(e.target as HTMLElement)}></fullscreen-button>
     </div>
   </div>
   <div class="content-panel">
@@ -599,8 +654,9 @@ simple-button:hover {
       </div>
     </div>
     <div class="background">
-      <video class="back-video" autoplay loop muted src="assets/a live visuals community.mp4"></video>
-      <fullscreen-button @click=${(e: Event) => this.doFullscreenContent(e.target as HTMLElement)} />
+      <video class="back-video" loop muted preload="none" src="assets/a live visuals community.mp4"></video>
+      <loading-indicator></loading-indicator>
+      <fullscreen-button @click=${(e: Event) => this.doFullscreenContent(e.target as HTMLElement)}></fullscreen-button>
     </div>
   </div>
   <div class="content-panel">
@@ -624,8 +680,9 @@ simple-button:hover {
       </div>
     </div>
     <div class="background">
-      <video class="back-video" autoplay loop muted src="assets/a community for learning.mp4"></video>
-      <fullscreen-button @click=${(e: Event) => this.doFullscreenContent(e.target as HTMLElement)} />
+      <video class="back-video" loop muted preload="none" src="assets/a community for learning.mp4"></video>
+      <loading-indicator></loading-indicator>
+      <fullscreen-button @click=${(e: Event) => this.doFullscreenContent(e.target as HTMLElement)}></fullscreen-button>
     </div>
   </div>
   <div class="content-panel">
@@ -645,8 +702,9 @@ simple-button:hover {
       </div>
     </div>
     <div class="background">
-      <video class="back-video" autoplay loop muted src="assets/an event group.mp4"></video>
-      <fullscreen-button @click=${(e: Event) => this.doFullscreenContent(e.target as HTMLElement)} />
+      <video class="back-video" loop muted preload="none" src="assets/an event group.mp4"></video>
+      <loading-indicator></loading-indicator>
+      <fullscreen-button @click=${(e: Event) => this.doFullscreenContent(e.target as HTMLElement)}></fullscreen-button>
     </div>
   </div>
   <div class="content-panel">
@@ -670,8 +728,9 @@ simple-button:hover {
       </div>
     </div>
     <div class="background">
-      <video class="back-video" autoplay loop muted src="assets/a safe place to try new things.mp4"></video>
-      <fullscreen-button @click=${(e: Event) => this.doFullscreenContent(e.target as HTMLElement)} />
+      <video class="back-video" loop muted preload="none" src="assets/a safe place to try new things.mp4"></video>
+      <loading-indicator></loading-indicator>
+      <fullscreen-button @click=${(e: Event) => this.doFullscreenContent(e.target as HTMLElement)}></fullscreen-button>
     </div>
   </div>
 </div>
@@ -766,6 +825,189 @@ export class SimpleButton extends LitElement {
   }
 }
 
+@customElement('loading-indicator')
+export class LoadingIndicator extends LitElement {
+  static styles = css`
+:host {
+  visibility: hidden;
+}
+
+@keyframes flash-in {
+  0% {
+    filter: blur(5px) blur(24px) contrast(8);
+    background-color: white;
+    opacity: var(--flash-strength);
+  }
+  8% {
+    filter: blur(0px) blur(0px) contrast(8);
+    background-color: white;
+    opacity: var(--flash-strength);
+  }
+  9.9% {
+    filter: blur(0px) blur(0px) contrast(8);
+    opacity: 0;
+  }
+  10% {
+    filter: blur(5px) blur(8px) contrast(8);
+    background-color: white;
+    opacity: var(--flash-strength);
+  }
+  18% {
+    filter: blur(0px) blur(0px) contrast(8);
+    background-color: white;
+    opacity: var(--flash-strength);
+  }
+  20% {
+    filter: unset;
+    background-color: transparent;
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+.flash-in {
+  animation-name: flash-in;
+  animation-duration: 1s;
+  animation-fill-mode: both;
+  animation-timing-function: linear;
+  animation-delay: 0.8s;
+}
+
+.bar-container {
+  --flash-strength: 0;
+  width: 100%;
+  height: 2px;
+  overflow: hidden;
+}
+.bar-container.first-trigger {
+  --flash-strength: 1;
+}
+.bar {
+  position: absolute;
+  left: 0;
+  width: 2px;
+  height: 2px;
+  bottom: 0;
+  background-color: #adadad;
+  z-index: 1;
+}
+`;
+
+  @query('.bar-container') barContainer?: HTMLElement;
+  @queryAll('.bar') allBars!: NodeListOf<HTMLElement>;
+  private shown = false;
+  private wasTriggered = false;
+  private retriggerStartAtTime = 0;
+  private disposer?: () => void;
+
+  connectedCallback() {
+    super.connectedCallback();
+  }
+
+  show() {
+    if (this.shown) {
+      return;
+    }
+    this.shown = true;
+    this.style.visibility = 'visible';
+    this.doRunAnimation();
+  }
+
+  hide() {
+    this.shown = false;
+    this.style.visibility = 'hidden';
+  }
+
+  private doRunAnimation() {
+    this.disposer?.();
+
+    const randomPhase = Math.random() * 0.5;
+
+    const speed = 0.1;
+    const speedX = 0.1;
+    let t = 0.0;
+    let prevTime = Date.now();
+    let terminated = false;
+    this.disposer = () => { terminated = true; };
+    const stepAnimation = () => {
+      if (terminated || !this.shown) {
+        return;
+      }
+      const nowTime = Date.now();
+      const deltaTime = nowTime - prevTime;
+      prevTime = nowTime;
+
+      t += deltaTime * speed / 1000;
+      let initX = t * speedX + randomPhase;
+      initX = initX * 0.5;
+      initX -= Math.floor(initX);
+      initX = 0.5 - initX;
+      initX = Math.abs(initX);
+      initX = 0.5 - initX;
+      initX = Math.max(0, Math.min(initX));
+
+      const count = this.allBars.length;
+      const spans = generateChaosSpans(t, count, { initX: initX, squash: 4.5 });
+      let index = 0;
+      for (const { start, end } of spans) {
+        const el = this.allBars.item(index);
+        el.style.left = CSS.percent(start * 100).toString();
+        el.style.width = CSS.percent((end - start) * 100).toString();
+        index++;
+      }
+      requestAnimationFrame(stepAnimation);
+    };
+    requestAnimationFrame(stepAnimation);
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this.disposer?.();
+  }
+
+  retrigger() {
+    if (!this.barContainer) {
+      return;
+    }
+    const nowTime = Date.now();
+    if (!this.shown || !this.wasTriggered) {
+      this.barContainer.classList.add('first-trigger');
+      this.retriggerStartAtTime = nowTime;
+      this.wasTriggered = this.shown;
+    } else {
+      const elapsedTime = nowTime - this.retriggerStartAtTime;
+      if (elapsedTime > 1000) {
+        this.barContainer.classList.remove('first-trigger');
+      }
+    }
+    for (const anim of this.barContainer.getAnimations() as CSSAnimation[]) {
+      if (anim.animationName === 'flash-in') {
+        anim.currentTime = 0.0;
+      }
+    }
+    this.doRunAnimation();
+  }
+
+  render() {
+    return html`
+<div class="bar-container flash-in">
+  <div class="bar"></div>
+  <div class="bar"></div>
+  <div class="bar"></div>
+  <div class="bar"></div>
+  <div class="bar"></div>
+  <div class="bar"></div>
+  <div class="bar"></div>
+  <div class="bar"></div>
+</div>
+`;
+  }
+}
+
 function getViewportLayout(): { viewportHeight: number; viewportCenter: number; } {
   if (!window.visualViewport) {
     return { viewportCenter: 0, viewportHeight: 0 };
@@ -796,4 +1038,25 @@ function setFadedIn(foreground: Element|null|undefined, fadedIn: boolean) {
       anim.playbackRate = fadedIn ? 1 : -1;
     }
   }
+}
+
+function generateChaosSpans(t: number, count: number, options?: { initX?: number; squash?: number; }): Array<{ start: number; end: number; }> {
+  const squashPower = options?.squash ?? 2.0;
+  const tSquash = Math.tanh(t * squashPower);
+  const a = 4 * tSquash;
+
+  const ys = new Array<number>(count * 2);
+  let x = options?.initX ?? 0.2;
+  for (let i = 0; i < count * 2; ++i) {
+    ys[i] = i === 0 ? 0 : Math.pow(x, 0.8);
+    x = a * x * (1 - x);
+  }
+  ys.sort();
+  const results = [];
+  for (let i = 0; i < count; ++i) {
+    const start = ys[i * 2 + 0];
+    const end = ys[i * 2 + 1];
+    results.push({ start: start, end: end });
+  }
+  return results;
 }
