@@ -185,7 +185,6 @@ p {
   left: calc((sin(var(--angle)) * 0.35 + 0.5) * 100%);
   top: calc((-1.0 * cos(var(--angle)) * 0.35 + 0.5) * 100%);
   transform: translate(-50%, -50%);
-  background-color: #00000080;
 }
 .spider-label.selected {
   text-decoration: underline;
@@ -433,3 +432,6 @@ function wrapClick(callback: () => unknown) {
     callback();
   };
 }
+
+
+document.body.appendChild(new App());

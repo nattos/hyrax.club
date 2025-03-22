@@ -4,7 +4,7 @@ const path = require('path');
 
 module.exports = [
   {
-    entry: './src/index.ts',
+    entry: './src/genres.ts',
     devtool: "source-map",
     target: 'web',
     module: {
@@ -35,7 +35,7 @@ module.exports = [
     plugins: [
       new HtmlWebpackPlugin({
           title: '',
-          template: 'src/index.html' }),
+          template: 'src/genres.html' }),
       new CopyWebpackPlugin({
           patterns: [
               { from: 'assets', to: './assets' },
