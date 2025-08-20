@@ -17,10 +17,6 @@ import './seq-note';
 
 
 
-
-
-
-
 @customElement('hyrax-app')
 export class App extends MobxLitElement {
   connectedCallback() {
@@ -29,9 +25,8 @@ export class App extends MobxLitElement {
 
   render() {
     return html`
-<hyrax-seq-tracks>
-  <hyrax-seq-track pattern=";hat;;;hat;;hat;hat"></hyrax-seq-track>
-  <hyrax-seq-track pattern="kick;;;kick;;;kick;"></hyrax-seq-track>
+<hyrax-seq-tracks bpm=90 allowDelete>
+  <hyrax-seq-track pattern="kick;;;;snare;;;;kick;;;;snare;;;"></hyrax-seq-track>
 </hyrax-seq-tracks>
 `;
   }

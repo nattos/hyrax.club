@@ -6,11 +6,14 @@ export interface NoteInstance {
   key: string;
   sample: SampleType;
   node: AudioBufferSourceNode;
+  outNode: AudioNode;
+  isEnded: boolean;
 }
 
 export interface Note {
   key: string;
   sample: SampleType;
+  gain?: number;
 }
 
 export type NoteOr = Note | undefined;
@@ -106,8 +109,10 @@ export class AudioEngine {
 
     let ready = false;
     this.ready.then(() => {
-      this.updateSeq();
-      ready = true;
+      runInAction(() => {
+        this.updateSeq();
+        ready = true;
+      });
     });
 
     let prevTime = this.audioContext.currentTime;
@@ -124,8 +129,8 @@ export class AudioEngine {
       this.transportBeatNumber += elapsedTime / beatDuration;
       runInAction(() => {
         this.observables.timeBeats = this.transportBeatNumber / BEAT_GRANULARITY;
+        this.updateSeq();
       });
-      this.updateSeq();
     });
   }
 
@@ -139,7 +144,8 @@ export class AudioEngine {
     this.observables.isPlaying = false;
   }
 
-  updateSeq() {
+  private updateSeq() {
+    let didNotesChange = false;
     const contextTime = this.audioContext.currentTime;
     const beatDuration = 60.0 / this.options.bpm / BEAT_GRANULARITY;
 
@@ -149,10 +155,16 @@ export class AudioEngine {
     this.seqPrevBeatNumber = this.transportBeatNumber;
     if (coarsePrevBeatNumber !== coarseThisBeatNumber) {
       for (const track of this.tracks.values()) {
-        if (track.queued) {
+        if (track.queued || track.playing?.isEnded) {
+          const oldKey = track.playing?.key;
+          const newKey = track.queued?.key;
           track.playing?.node.disconnect();
+          track.playing?.outNode.disconnect();
           track.playing = track.queued;
           track.queued = undefined;
+          if (oldKey !== newKey) {
+            didNotesChange = true;
+          }
         }
       }
     }
@@ -173,6 +185,7 @@ export class AudioEngine {
         continue;
       }
       // console.log(patternStepIndex, nextNote);
+      didNotesChange = true;
       track.queued?.node.disconnect();
       track.queued = undefined;
 
@@ -180,14 +193,30 @@ export class AudioEngine {
         continue;
       }
       const bufferNode = this.audioContext.createBufferSource();
-      bufferNode.buffer = this.samples[nextNote.sample];
-      track.queued = {
+      bufferNode.buffer = this.samples[nextNote.sample].audioBuffer;
+      const outNode = this.audioContext.createGain();
+      outNode.gain.value = nextNote.gain ?? 1.0;
+      const toQueue: NoteInstance = {
         key: nextNote.key,
         sample: nextNote.sample,
         node: bufferNode,
+        outNode: outNode,
+        isEnded: false,
       };
-      bufferNode.connect(this.destination);
+      toQueue.node.onended = () => {
+        toQueue.isEnded = true;
+      };
+      track.queued = toQueue;
+
+      bufferNode.connect(outNode);
+      outNode.connect(this.destination);
       bufferNode.start(nextBeatContextTime);
+    }
+
+    if (didNotesChange) {
+      for (const [key, track] of this.tracks) {
+        this.observables.channelNotes.set(key, track.playing?.key ?? '');
+      }
     }
   }
 
@@ -217,7 +246,7 @@ export class AudioEngine {
   triggerSample(sampleType: SampleType) {
     this.ready.then(() => {
       const bufferSourceNode = this.audioContext.createBufferSource();
-      bufferSourceNode.buffer = this.samples[sampleType];
+      bufferSourceNode.buffer = this.samples[sampleType].audioBuffer;
       bufferSourceNode.connect(this.destination);
       bufferSourceNode.start(this.audioContext.currentTime);
     });

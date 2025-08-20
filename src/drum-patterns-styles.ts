@@ -10,8 +10,24 @@ export const COMMON_STYLES = css`
   }
 }
 
+:host {
+  --note-width: 2.8em;
+  --track-height: 5em;
+}
+
 
 .hidden {
   visibility: hidden;
+}
+
+.debug-button {
+  padding: 0.5em 1em;
+  background-color: crimson;
+  cursor: pointer;
+  user-select: none;
+  text-align: center;
+}
+.debug-button:hover {
+  background-color: cornflowerblue
 }
 `;
