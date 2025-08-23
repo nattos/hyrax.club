@@ -25,11 +25,11 @@ export function wrapFloat01(x: number) {
   return x - Math.floor(x);
 }
 
-export function wrapClick(callback: () => unknown) {
-  return action((e: Event) => {
+export function wrapClick<T extends Event>(callback: (e: T) => unknown) {
+  return action((e: T) => {
     e.stopPropagation();
     e.preventDefault();
-    callback();
+    callback(e);
   });
 }
 

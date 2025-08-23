@@ -654,3 +654,8 @@ export function isDeepStrictEqual(object1: any, object2: any) {
 function isObject(object: any) {
   return object != null && typeof object === 'object';
 }
+
+export function isMobile() {
+  const match = window.matchMedia;
+  return match?.("(hover: none)").matches ?? false;
+}

@@ -2,17 +2,19 @@ import { MobxLitElement } from '@adobe/lit-mobx/lit-mobx';
 import { css, html, PropertyValues } from 'lit';
 import { customElement, property, query } from 'lit/decorators.js';
 import { action, autorun, makeObservable, observable, runInAction, toJS } from 'mobx';
-import { Point, wrapClick, wrapFloat01 } from './layout-utils';
+import { clamp01, Point, wrapClick, wrapFloat01 } from './layout-utils';
 import { COMMON_STYLES } from './drum-patterns-styles';
 import { DRAG_PADDING_FRACTION, SeqTracks } from './seq-tracks';
 import { Note, NoteOr } from './audio-engine';
-import { SampleType } from './audio-environment';
+import { AudioEnvironment, SampleType } from './audio-environment';
 import { PointerDragOp } from './pointer-drag-op';
 
 export interface SeqStep {
   note?: Note;
   ghostNote?: Note;
   isPinned: boolean;
+  isGood: boolean;
+  isMoving: boolean;
 }
 
 @customElement('hyrax-seq-track')
@@ -21,11 +23,24 @@ export class SeqTrack extends MobxLitElement {
     COMMON_STYLES,
     css`
 :host {
+  --_tracks-grid-color: var(--tracks-grid-color, --app-track-grid-color);
   display: block;
   position: relative;
   width: calc(var(--note-width) * 16);
   height: var(--track-height);
-  background-color: slateblue;
+  border-right: 1px solid var(--_tracks-grid-color);
+  touch-action: none;
+}
+:host(.short) {
+  --track-height: var(--short-track-height);
+  margin-bottom: 2em;
+}
+:host(.muted) {
+  filter: saturate(0);
+}
+
+hyrax-seq-note, hyrax-seq-note-underlay {
+  --track-grid-color: var(--_tracks-grid-color);
 }
 
 .transport-position-indicator {
@@ -43,13 +58,23 @@ export class SeqTrack extends MobxLitElement {
   @property({ type: Number }) seqStepNum = 1;
   @property({ type: Number }) seqStepDenom = 16;
   @property({ type: Boolean }) fillHats = false;
+  @property({ type: Number }) fillHatsStep = 1;
+  @property({ type: Number }) fillHatsOffset = 0;
+  @property({ type: Boolean }) fillHatsRetrigger = false;
+  @property({ type: Boolean }) pinned = false;
+  @property({ type: Boolean }) muted = false;
   @property() pattern = '';
+  @property() slicesSrc = '';
+  @property({ type: Number }) slicesBars = 4;
+  @property({ type: Number }) slicesPageByBars = 1;
 
   @observable.ref parent?: SeqTracks = undefined;
   @observable.ref track?: string = undefined;
 
   @observable currentPattern: SeqStep[] = observable([]);
   private cachedPatternStr = '';
+  private cachedSlicesSrc = '';
+  private lastGoodPageIndex = 0;
   private readonly ghostNotes: Note[] = [];
 
   private disposer?: () => void;
@@ -73,16 +98,15 @@ export class SeqTrack extends MobxLitElement {
   disconnectedCallback() {
     super.disconnectedCallback();
     this.disposer?.();
-      console.log('this.disposer?.();');
   }
 
   @action
-  moveNote(noteKey: string, fineDelta: number, oldPattern: SeqStep[]) {
+  moveNote(noteKey: string, fineDelta: number, oldPattern: SeqStep[], options: { markAsMoving: boolean; }) {
     const delta = Math.round(fineDelta) | 0;
     const subDelta = fineDelta - delta;
     const newPattern = structuredClone(toJS(oldPattern));
     const oldIndex = newPattern.findIndex(n => n.note?.key === noteKey);
-    if (oldIndex < 0) {
+    if (oldIndex < 0 || this.pinned) {
       this.currentPattern = oldPattern;
       return;
     }
@@ -108,6 +132,7 @@ export class SeqTrack extends MobxLitElement {
     const displacedNote = newPattern[newIndex].note;
     newPattern[oldIndex].note = undefined;
     newPattern[newIndex].note = oldNote;
+    newPattern[newIndex].isMoving = options.markAsMoving;
 
     if (displacedNote) {
       const insertIndex = tryMakeSpaceRight(1, newIndex, newPattern) ?? tryMakeSpaceLeft(1, newIndex, newPattern);
@@ -120,7 +145,11 @@ export class SeqTrack extends MobxLitElement {
   }
 
   @action
-  insertNote(note: Note, finePos: number, oldPattern: SeqStep[]) {
+  insertNote(note: Note, finePos: number, oldPattern: SeqStep[], options: { markAsMoving: boolean; }) {
+    if (this.pinned) {
+      this.currentPattern = oldPattern;
+      return;
+    }
     const pos = Math.round(finePos) | 0;
     const subPos = finePos - pos;
     const newPattern = structuredClone(toJS(oldPattern));
@@ -136,6 +165,7 @@ export class SeqTrack extends MobxLitElement {
 
     const displacedNote = newPattern[newIndex].note;
     newPattern[newIndex].note = note;
+    newPattern[newIndex].isMoving = options.markAsMoving;
 
     if (displacedNote) {
       const insertIndex = tryMakeSpaceRight(1, newIndex, newPattern) ?? tryMakeSpaceLeft(1, newIndex, newPattern);
@@ -149,6 +179,10 @@ export class SeqTrack extends MobxLitElement {
 
   @action
   removeNote(noteKey: string, oldPattern: SeqStep[]) {
+    if (this.pinned) {
+      this.currentPattern = oldPattern;
+      return;
+    }
     const newPattern = structuredClone(toJS(oldPattern));
     const oldIndex = newPattern.findIndex(n => n.note?.key === noteKey);
     if (oldIndex < 0) {
@@ -165,12 +199,20 @@ export class SeqTrack extends MobxLitElement {
     this.currentPattern = newPattern;
   }
 
+  @action
+  endMoveNote() {
+    for (const step of this.currentPattern) {
+      step.isMoving = false;
+    }
+  }
+
   syncData() {
     if (!this.parent || !this.track) {
       return;
     }
     this.parent.engine.setTrackOptions(this.track, {
       seqStepSize: this.seqStepNum / this.seqStepDenom,
+      muted: this.muted,
     });
     this.parent.engine.setSeqPattern(this.track, toJS(this.currentPattern).map(s => s.note ?? s.ghostNote));
   }
@@ -183,20 +225,47 @@ export class SeqTrack extends MobxLitElement {
           s = s.trim();
 
           let isPinned = false;
-          if (s.startsWith('!')) {
-            isPinned = true;
-            s = s.slice(1).trim();
+          let isGood = false;
+          while (true) {
+            if (s.startsWith('!')) {
+              isPinned = true;
+              s = s.slice(1).trim();
+            } else if (s.startsWith('@')) {
+              isGood = true;
+              s = s.slice(1).trim();
+            } else {
+              break;
+            }
           }
 
           let note: NoteOr;
           if (s) {
-            note = { key: crypto.randomUUID(), sample: s.trim() as SampleType };
+            note = { key: AudioEnvironment.newNoteKey(), sound: s.trim() as SampleType };
           }
           return {
             note: note,
             isPinned: isPinned,
+            isGood: isGood,
+            isMoving: false,
           } satisfies SeqStep;
         }));
+        this.applyGhostNotes(newPattern);
+        this.currentPattern = newPattern;
+      });
+    }
+    if (this.cachedSlicesSrc !== this.slicesSrc) {
+      this.cachedSlicesSrc = this.slicesSrc;
+      runInAction(() => {
+        const slices = AudioEnvironment.instance.loadDynamicSampleSlices(this.slicesSrc, this.slicesBars * this.seqStepDenom / this.seqStepNum);
+        const newPattern = slices.map<SeqStep>(s => {
+          let note: NoteOr = { key: AudioEnvironment.newNoteKey(), sound: s };
+          return {
+            note: note,
+            isPinned: false,
+            isGood: false,
+            isMoving: false,
+          } satisfies SeqStep;
+        });
         this.applyGhostNotes(newPattern);
         this.currentPattern = newPattern;
       });
@@ -205,49 +274,73 @@ export class SeqTrack extends MobxLitElement {
   }
 
   render() {
+    const engine = this.parent?.engine;
+    const track = this.track;
+    const playingNote = engine?.observables.channelNotes.get(track ?? '');
+    let currentPatternPage = this.currentPattern;
+    if (this.slicesSrc) {
+      const pageLength = this.slicesPageByBars * this.seqStepDenom / this.seqStepNum;
+      const noteIndex = currentPatternPage.findIndex(s => s.note?.key === playingNote);
+      const pageIndex = noteIndex < 0 ? this.lastGoodPageIndex : (Math.floor(noteIndex / pageLength) | 0);
+      if (noteIndex >= 0) {
+        this.lastGoodPageIndex = pageIndex;
+      }
+      const pageOffset = (pageIndex * pageLength) | 0;
+      currentPatternPage = currentPatternPage.slice(pageOffset, pageOffset + pageLength);
+    }
+
+    const renderSeqStep = (n: SeqStep, i: number) => {
+      const note = n.note ?? n.ghostNote;
+      if (!note) {
+        return;
+      }
+      return html`
+<hyrax-seq-note
+    .parent=${this}
+    .step=${n}
+    seqpos=${i}
+    seqlen=${currentPatternPage.length}
+    @pointerdown=${wrapClick((e: PointerEvent) => {
+      const parent = this.parent;
+      const engine = parent?.engine;
+      if (!parent || !engine) {
+        return;
+      }
+      engine.onInteraction();
+
+      const isPreviewTrack = !!this.slicesSrc;
+      parent.soloPreview = isPreviewTrack;
+      parent.updateTransport();
+      engine.isTransportMomentaryPlaying = true;
+
+      this.parent?.doMoveNote(e, note, {
+        complete: () => {
+          engine.isTransportMomentaryPlaying = false;
+          parent.soloPreview = false;
+        },
+      });
+    })}
+    >
+</hyrax-seq-note>
+`;
+    };
+    const renderSeqStepUnderlay = (n: SeqStep, i: number) => {
+      return html`
+<hyrax-seq-note-underlay
+    .parent=${this}
+    .step=${n}
+    seqpos=${i}
+    seqlen=${currentPatternPage.length}
+    >
+</hyrax-seq-note-underlay>
+`;
+    }
+
     return html`
 <div id="transport-position-indicator" class="transport-position-indicator"></div>
 <div>
-${this.currentPattern.map((n, i) => { const note = n.note ?? n.ghostNote; if (!note) { return; } return html`
-  <hyrax-seq-note
-      .parent=${this}
-      .step=${n}
-      seqpos=${i}
-      seqlen=${this.currentPattern.length}
-      @pointerdown=${(e: PointerEvent) => {
-        const engine = this.parent?.engine;
-        if (!engine) {
-          return;
-        }
-        engine.isTransportMomentaryPlaying = true;
-
-        const oldPattern = toJS(this.currentPattern);
-        const noteKey = note.key;
-        new PointerDragOp(e, this, {
-          move: (e: PointerEvent, [deltaX, deltaY]: Point) => {
-            const canDelete = !!this.parent?.allowDelete;
-            const mouseX = e.clientX;
-            const mouseY = e.clientY;
-            const clientRect = this.getBoundingClientRect();
-            const mouseLocalX = mouseX - clientRect.x;
-            const mouseLocalY = mouseY - clientRect.y;
-            const dragPaddingY = clientRect.height * DRAG_PADDING_FRACTION;
-            const isBeyondStart = mouseLocalY < -dragPaddingY;
-            const isBeyondEnd = mouseLocalY > (clientRect.height + dragPaddingY);
-            if (canDelete && (isBeyondStart || isBeyondEnd)) {
-              this.removeNote(noteKey, oldPattern);
-            } else {
-              this.moveNote(noteKey, deltaX / clientRect.width * this.currentPattern.length, oldPattern);
-            }
-          },
-          complete: () => {
-            engine.isTransportMomentaryPlaying = false;
-          },
-        });
-      }}
-      >
-  </hyrax-seq-note>
-`;})}
+  ${currentPatternPage.map(renderSeqStepUnderlay)}
+  ${currentPatternPage.map(renderSeqStep)}
 </div>
 `;
   }
@@ -258,6 +351,7 @@ ${this.currentPattern.map((n, i) => { const note = n.note ?? n.ghostNote; if (!n
     if (!engine) {
       return;
     }
+    this.classList.toggle('muted', this.muted);
     this.updateTransportStatus(engine.observables.isPlaying, engine.observables.timeBeats);
   }
 
@@ -265,31 +359,54 @@ ${this.currentPattern.map((n, i) => { const note = n.note ?? n.ghostNote; if (!n
     if (!this.transportPositionIndicator) {
       return;
     }
-    this.transportPositionIndicator.classList.toggle('hidden', !isPlaying);
-    const loopLength = (Math.max(1, this.currentPattern.length) | 0) * 4 * this.seqStepNum / this.seqStepDenom;
-    const loopT = wrapFloat01(timeBeats / loopLength);
-    this.transportPositionIndicator.style.left = CSS.percent(loopT * 100).toString();
+
+    const patternLength = this.currentPattern.length;
+    const loopLength = (Math.max(1, patternLength) | 0) * 4 * this.seqStepNum / this.seqStepDenom;
+    const loopBeat = wrapFloat01(timeBeats / loopLength) * loopLength;
+
+    let pageT = loopBeat / loopLength;
+    let isCurrentPage = true;
+    if (this.slicesSrc) {
+      const pageLength = this.slicesPageByBars / 4 * this.seqStepDenom / this.seqStepNum;
+      const pageIndex = this.lastGoodPageIndex;
+      const pageOffset = (pageIndex * pageLength) | 0;
+
+      const pageBeat = loopBeat - pageOffset;
+      isCurrentPage = pageBeat >= 0 && pageBeat <= pageLength;
+      pageT = clamp01(pageBeat / pageLength);
+    }
+
+
+    this.transportPositionIndicator.style.left = CSS.percent(pageT * 100).toString();
+    this.transportPositionIndicator.classList.toggle('hidden', !isPlaying || !isCurrentPage);
   }
 
   private applyGhostNotes(pattern: SeqStep[]) {
     const ghostNoteQueue = Array.from(this.ghostNotes);
+    let ghostStep = this.fillHatsOffset;
     for (const step of pattern) {
       const isGhost = !step.note;
       if (isGhost) {
+        let isActive = (ghostStep % this.fillHatsStep) === 0;
         let ghostNote: NoteOr;
-        if (this.fillHats) {
+        if (this.fillHats && isActive) {
           ghostNote = ghostNoteQueue.shift();
           if (!ghostNote) {
             ghostNote = {
-              key: crypto.randomUUID(),
-              sample: 'hat',
+              key: AudioEnvironment.newNoteKey(),
+              sound: 'hat',
               gain: 0.5,
             };
             this.ghostNotes.push(ghostNote);
           }
         }
         step.ghostNote = ghostNote;
+      } else {
+        if (this.fillHatsRetrigger) {
+          ghostStep = this.fillHatsOffset;
+        }
       }
+      ghostStep++;
     }
   }
 }

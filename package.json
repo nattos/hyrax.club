@@ -4,7 +4,7 @@
   "description": "",
   "main": "./dist/main.js",
   "scripts": {
-    "develop": "webpack-dev-server --config webpack.config.js --mode development",
+    "develop": "webpack-dev-server --config webpack.config-drum-patterns.js --mode development",
     "run": "webpack-dev-server --mode production",
     "build": "webpack --mode production",
     "build-genres": "webpack --config webpack.config-genres.js --mode production"
