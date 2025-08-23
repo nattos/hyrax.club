@@ -402,6 +402,7 @@ hyrax-seq-note, hyrax-seq-note-underlay {
         }
         step.ghostNote = ghostNote;
       } else {
+        step.ghostNote = undefined;
         if (this.fillHatsRetrigger) {
           ghostStep = this.fillHatsOffset;
         }
