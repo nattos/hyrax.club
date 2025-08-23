@@ -510,6 +510,7 @@ body, :host {
   max-width: calc(max(50%, 30em));
   p {
     margin: 0.5em 1em;
+    margin-inline: 0;
   }
 }
 @media (hover: none) {
