@@ -55,9 +55,10 @@ export class App extends MobxLitElement {
       Try editing the sequence, moving around the kick and snare to see how the rhythm changes.
     </div>
     <div class="subnote">
-      <p>Tips:</p><p>Press and hold <em>listen</em> to hear the example. Let go to stop. You can also tap on the waveform itself.</p>
-      <p>Tap <em>play</em> to start continuous play mode.</p>
-      <p>Pressing <em>listen</em> while in continous play mode lets you hear the example momentarily. Let go to go back to hearing your pattern.</p>
+      <div>Tips:</div>
+      <div>Press and hold <em>listen</em> to hear the example. Let go to stop. You can also tap on the waveform itself.</div>
+      <div>Tap <em>play</em> to start continuous play mode.</div>
+      <div>Pressing <em>listen</em> while in continous play mode lets you hear the example momentarily. Let go to go back to hearing your pattern.</div>
     </div>
   </div>
   <hyrax-seq-tracks bpm=110 class="highlighted">
@@ -447,8 +448,11 @@ body, :host {
   color: var(--app-text-color2);
   font-size: 80%;
   max-width: calc(max(50%, 30em));
-  p {
-    margin: 0.5em 1em;
+  display: flex;
+  flex-direction: column;
+
+  div {
+    padding: 0.35em 1em;
     margin-inline: 0;
   }
 }
