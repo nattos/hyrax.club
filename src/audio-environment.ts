@@ -125,6 +125,16 @@ export class AudioEnvironment {
   }
 }
 
+export function isSameSound(a: Sound | undefined, b: Sound | undefined) {
+  if (a === b) {
+    return true;
+  }
+  if (typeof a === 'string' || typeof b === 'string') {
+    return false;
+  }
+  return a?.audio.key === b?.audio.key;
+}
+
 async function loadSamples(audioContext: AudioContext) {
   const sampleTasks = {
     kick: loadSample('assets/kick.wav', 'kick', audioContext),

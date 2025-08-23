@@ -2,7 +2,7 @@ import { MobxLitElement } from '@adobe/lit-mobx/lit-mobx';
 import { css, html, PropertyValues } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { SeqStep, SeqTrack } from './seq-track';
-import { AudioEnvironment, Sound } from './audio-environment';
+import { AudioEnvironment, isSameSound, Sound } from './audio-environment';
 import { autorun, makeObservable, observable, runInAction } from 'mobx';
 import { classMap } from 'lit/directives/class-map.js';
 import { styleMap } from 'lit/directives/style-map.js';
@@ -79,7 +79,7 @@ export abstract class SeqNoteBase extends MobxLitElement {
       this.classList.toggle('good', this.step?.isGood);
       this.moving = !!this.step?.isMoving;
 
-      if (sample !== this.cachedSound) {
+      if (!isSameSound(sample, this.cachedSound)) {
         this.cachedSound = sample;
         this.onSoundChanged();
       }

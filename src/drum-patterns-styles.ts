@@ -48,6 +48,13 @@ export const COMMON_STYLES = css`
   letter-spacing: 0.0125em;
 }
 
+em {
+  font-style: unset;
+  font-size: 90%;
+  color: var(--app-color1);
+  letter-spacing: 0.05em;
+}
+
 .subnote {
   font-size: 65%;
   color: var(--app-text-color2);

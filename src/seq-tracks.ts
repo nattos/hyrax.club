@@ -246,14 +246,14 @@ export class SeqTracks extends MobxLitElement {
   }) {
     const engine = this.engine;
     const oldPatterns = this.cachedTracks.map((t, i) => ({ track: t, seqTrack: t, trackIndex: i, oldPattern: toJS(t.currentPattern) }));
-    const oldNoteTrack = oldPatterns.find(t => t.oldPattern.find(s => s.note?.key === newNote.key));
-    const oldNoteIndex = oldNoteTrack?.oldPattern.findIndex(s => s.note?.key === newNote.key) ?? -1;
+    const oldNoteTrack = oldPatterns.find(t => t.oldPattern.find(s => s.note?.key === newNote.key || s.ghostNote?.key === newNote.key));
+    const oldNoteIndex = oldNoteTrack?.oldPattern.findIndex(s => s.note?.key === newNote.key || s.ghostNote?.key === newNote.key) ?? -1;
     const oldNote = oldNoteTrack?.oldPattern[oldNoteIndex];
     const isOldNote = !!oldNoteTrack;
 
     new PointerDragOp(e, this, {
       move: action((e: PointerEvent) => {
-        const canMove = !oldNote?.isPinned && !oldNoteTrack?.track.pinned;
+        const canMove = !oldNote?.isPinned && !oldNote?.ghostNote && !oldNoteTrack?.track.pinned;
         const canDelete = !!this.allowDelete && canMove;
         const mouseX = e.clientX;
         const mouseY = e.clientY;

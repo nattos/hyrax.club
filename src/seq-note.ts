@@ -76,7 +76,6 @@ export class SeqNote extends SeqNoteBase {
 
   render() {
     let movingIndicatorContent;
-    console.log(isMobile());
     if (this.moving && isMobile()) {
       movingIndicatorContent = html`<div class="moving-indicator"></div>`;
     }
