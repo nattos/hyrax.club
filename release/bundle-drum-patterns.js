@@ -10,7 +10,6 @@ var hyraxclub;(()=>{"use strict";var e={813:(e,t,n)=>{function r(e){for(var t=ar
 }
 
 :host {
-  --multi-column: 1;
   --app-color1: #FFFACD;
   --app-color2: #D87093;
   --app-color3: #444444;
@@ -30,11 +29,6 @@ var hyraxclub;(()=>{"use strict";var e={813:(e,t,n)=>{function r(e){for(var t=ar
   color: var(--app-text-color2);
   font-family: Questrial, "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: calc(max(10px, min(32px, min(1.6vw, 1.6vh))));
-}
-@media (max-width: 1400px) {
-  :host {
-    --multi-column: 0;
-  }
 }
 
 .hidden {
@@ -464,10 +458,10 @@ body, :host {
   grid-column: 1;
 }
 .info-grid hyrax-seq-tracks {
-  grid-column: calc(max(1, var(--multi-column) * 2));
+  grid-column: 1 / 1;
 }
 .info-grid .centered {
-  grid-column: 1 / calc(max(2, var(--multi-column) * 3));
+  grid-column: 1 / 1;
 }
 .h0 {
   color: var(--app-text-color1);
@@ -476,17 +470,16 @@ body, :host {
   margin-bottom: 2em;
 }
 .h1 {
-  margin-top: calc((1 - var(--multi-column)) * 3em);
+  margin-top: 3em;
 }
 
 .data {
   display: flex;
   flex-direction: column;
-  min-width: calc(max(80%, (1 - var(--multi-column)) * 20em));
+  min-width: min(80%, 20em);
   max-width: 30em;
   gap: 1em;
   place-self: center;
-  padding-left: calc(var(--multi-column) * 2em);
   margin-top: 1em;
   margin-bottom: 4em;
   font-size: 100%;
@@ -553,7 +546,7 @@ hyrax-seq-tracks .notes {
 
 .info-grid .sampler-divider {
   place-self: center;
-  grid-column: 1 / calc(max(2, var(--multi-column) * 3));
+  grid-column: 1 / 1;
   margin: 0;
   padding: 0;
 }

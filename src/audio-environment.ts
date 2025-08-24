@@ -1,6 +1,7 @@
 import * as utils from './utils';
 
 const SVG_BAR_COUNT = 10;
+const SVG_MOBILE_BAR_COUNT = 7;
 const SVG_BAR_MARGIN = 0.2;
 
 const SVG_BAR_COLORS = {
@@ -18,6 +19,7 @@ export interface SampleEntry {
   offset?: number;
   duration?: number;
   svgUrl: string;
+  denseSvgUrl?: string;
 }
 
 export type Sound = SampleType|SoundRef;
@@ -150,8 +152,8 @@ async function loadSample(path: string, hint: string, audioContext: AudioContext
   try {
     const audioFileBytes = await (await fetch(path)).arrayBuffer();
     const audioBuffer = await audioContext.decodeAudioData(audioFileBytes);
-    const svgUrl = drawSvg(audioBuffer, { hint: hint });
-    return { audioBuffer, svgUrl };
+    const svgUrls = drawSvgs(audioBuffer, { hint: hint, forceIncludeDense: true });
+    return { audioBuffer, ...svgUrls };
   } catch (e) {
     console.error(`Failed to load sample ${path}`, e);
     return createEmptySampleEntry(audioContext);
@@ -164,12 +166,31 @@ function createEmptySampleEntry(audioContext: AudioContext) {
   return { audioBuffer, svgUrl };
 }
 
+function drawSvgs(audioBuffer: AudioBuffer,
+  options?: {
+    hint?: string;
+    offset?: number;
+    duration?: number;
+    forceIncludeDense?: boolean;
+  }
+) {
+  const svgUrl = drawSvg(audioBuffer, options);
+  let denseSvgUrl: string | undefined = undefined;
+  if (!utils.isMobile()) {
+    denseSvgUrl = svgUrl;
+  } else if (options?.forceIncludeDense) {
+    // denseSvgUrl = drawSvg(audioBuffer, { ...options, dense: true });
+  }
+  return { svgUrl, denseSvgUrl };
+}
+
 function drawSvg(
   audioBuffer: AudioBuffer,
   options?: {
     hint?: string;
     offset?: number;
     duration?: number;
+    dense?: boolean;
   }
 ): string {
   const offset = options?.offset;
@@ -186,10 +207,11 @@ function drawSvg(
   if (offset !== undefined && bufferDuration > 0) {
     sampleOffset = (sampleCount * offset / bufferDuration) | 0;
   }
+  sampleOffset -= 8;
   if (duration !== undefined && bufferDuration > 0) {
     sampleCount = (sampleCount * duration / bufferDuration) | 0;
   }
-  const barCount = SVG_BAR_COUNT;
+  const barCount = (utils.isMobile() && !options?.dense) ? SVG_MOBILE_BAR_COUNT : SVG_BAR_COUNT;
 
   let svgString = '<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">';
   const color = (hint ? SVG_BAR_COLORS[hint as (keyof typeof SVG_BAR_COLORS)] : undefined) ?? SVG_BAR_DEFAULT_COLOR;

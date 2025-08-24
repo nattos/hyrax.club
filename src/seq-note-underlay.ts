@@ -25,11 +25,11 @@ export class SeqNoteUnderlay extends SeqNoteBase {
 .good-indicator {
   display: none;
   position: absolute;
-  bottom: calc(-3px + 0.25em);
+  bottom: calc(-3px - 0.275em);
   height: 0.25em;
-  left: 1.5px;
-  right: 0;
-  margin: 0 40%;
+  width: 0.125em;
+  left: calc(50% + 1px);
+  transform: translate(-50%, 0);
   background-color: var(--app-hi-color2);
 }
 :host(.good) .good-indicator {
@@ -41,16 +41,19 @@ export class SeqNoteUnderlay extends SeqNoteBase {
 
 .step-label {
   position: absolute;
+  left: 1.5px;
   right: 0;
-  bottom: -0.1em;
+  bottom: -0.25em;
   text-align: center;
-  font-size: 70%;
+  font-size: 80%;
   color: var(--track-grid-color);
 }
 .step-label.quarter-note {
   color: var(--track-grid-color);
 }
 `];};
+
+  @property({ type: Boolean }) less = false;
 
   constructor() {
     super();

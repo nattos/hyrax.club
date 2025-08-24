@@ -23,7 +23,7 @@ export class App extends MobxLitElement {
       Easy drum patterns
     </div>
     <div class="block-quote">
-      "Remembering sequences is hard. Remembering edits is easier!"
+      "Remembering sequences is hard.<br>Remembering edits is easier!"
     </div>
     <div>
       Presenting a paradigm to constructing all sorts of drum patterns. Focus on remembering the two extremely basic fundamental patterns (boom-slap and 4-to-the-floor), and their rules-of-thumb for making edits on top.
@@ -68,6 +68,18 @@ export class App extends MobxLitElement {
     <div slot="notes" class="notes">
       drag samples around to edit
     </div>
+
+    <div slot="preview-button" class="floating-hint preview-button-notes">
+      <div>
+        press and hold!
+      </div>
+    </div>
+    <div slot="play-button" class="floating-hint play-button-notes">
+      <div>
+        tap to toggle!
+      </div>
+    </div>
+
   </hyrax-seq-tracks>
   <div class="data">
     <div class="block-quote">
@@ -104,7 +116,11 @@ export class App extends MobxLitElement {
   </hyrax-seq-tracks>
 
   <div class="data">
-    You can also try shifting around the snares to see how the rhythm tends to fall apart. In contrast, we can basically move the kicks as much as we want and get a steady, understandable rhythm.
+    <div class="subnote">
+      <div>Try it:</div>
+      <div>Shift around the snares as well! See how the rhythm tends to fall apart.</div>
+      <div>In contrast, we can basically move the kicks as much as we want and get a steady, understandable rhythm.</div>
+    </div>
   </div>
 
   <div class="section-break"></div>
@@ -149,21 +165,27 @@ export class App extends MobxLitElement {
     <hyrax-seq-track pattern="@kick;@;;;@snare;;;;kick;;@;;@snare;;;" fillHats></hyrax-seq-track>
   </hyrax-seq-tracks>
 
-
+  <div class="spacer"></div>
 
   <hyrax-seq-tracks bpm=133 allowDelete>
     <div slot="header" class="header">garage</div>
     <hyrax-seq-track class="short" slicesSrc="assets/loop_samples/garage_133.wav" slicesBars=4 pinned></hyrax-seq-track>
     <hyrax-seq-track pattern="@kick;;;;@snare;;;@;kick;;@;;@snare;;;" fillHats fillHatsStep=2 fillHatsRetrigger></hyrax-seq-track>
   </hyrax-seq-tracks>
+
+  <div class="spacer"></div>
+
   <hyrax-seq-tracks bpm=130 allowDelete>
     <div slot="header" class="header">breaks</div>
     <hyrax-seq-track class="short" slicesSrc="assets/loop_samples/breaks_130.wav" slicesBars=4 pinned></hyrax-seq-track>
     <hyrax-seq-track pattern="@kick;;;;@snare;;@;;kick;@;;;@snare;;;" fillHats fillHatsStep=2 fillHatsRetrigger></hyrax-seq-track>
   </hyrax-seq-tracks>
+
+  <div class="spacer"></div>
+
   <div class="data">
     <div>
-      This pattern is a bit harder to replicate. The pattern is two bars long, while ours is only one. For now, focus on replicating the first bar.
+      The following pattern is a bit harder to replicate. The pattern is two bars long, while ours is only one. For now, focus on replicating the first bar.
     </div>
   </div>
   <hyrax-seq-tracks bpm=100 allowDelete>
@@ -186,13 +208,15 @@ export class App extends MobxLitElement {
     <hyrax-seq-track pattern="@kick;;;;;;;;@snare;;;;;;;;kick;;;@;;;@;;@snare;;;;;;;" fillHats fillHatsStep=2></hyrax-seq-track>
   </hyrax-seq-tracks>
 
-
+  <div class="spacer"></div>
 
   <hyrax-seq-tracks bpm=142 allowDelete beatScale=2>
     <div slot="header" class="header">trap</div>
     <hyrax-seq-track class="short" slicesSrc="assets/loop_samples/trap_142.wav" slicesBars=4 slicesPageByBars=2 pinned></hyrax-seq-track>
     <hyrax-seq-track pattern="@kick;;;;;;@;;@snare;;;;@;;;;kick;;;;@;;;;@snare;;;;;;;" fillHats fillHatsStep=2></hyrax-seq-track>
   </hyrax-seq-tracks>
+
+
   <div class="data">
     <div>
       Drum 'n' bass is fast, making it harder to reason about the rhythm, but it follows the same simple rules. DnB rhythms can be easily constructed using the same shifting paradigm.
@@ -245,6 +269,9 @@ export class App extends MobxLitElement {
     <hyrax-seq-track class="short" slicesSrc="assets/loop_samples/hiphop_100.wav" slicesBars=2 pinned slicesPageByBars=2></hyrax-seq-track>
     <hyrax-seq-track pattern="@kick;;;;@!snare;;@;;kick;;@;;@!snare;;;@;@kick;;;;@!snare;@;@;;kick;;@;;@!snare;;;" fillHats></hyrax-seq-track>
   </hyrax-seq-tracks>
+
+  <div class="spacer"></div>
+
   <hyrax-seq-tracks bpm=133 allowDelete>
     <div slot="header" class="header">garage two bar</div>
     <hyrax-seq-track class="short" slicesSrc="assets/loop_samples/garage_133.wav" slicesBars=4 pinned slicesPageByBars=2></hyrax-seq-track>
@@ -322,7 +349,20 @@ export class App extends MobxLitElement {
     <hyrax-seq-track pattern=";;@;;;;@;;;;@;;;;@;"></hyrax-seq-track>
   </hyrax-seq-tracks>
 
+  <div class="data">
+    <div class="subnote">
+      <div>
+        Note:
+      </div>
+      <div>Our edits here tend to involve <em>layering</em>.</div>
+      <div>This is very typical of house, techno, trance, and associated 4-to-the-floor rhythms.</div>
+    </div>
+  </div>
 
+
+
+
+  <div class="section-break"></div>
 
   <div class="data">
     <div>
@@ -355,7 +395,7 @@ export class App extends MobxLitElement {
     <hyrax-seq-track pattern=";;@;;;;@;;;;@;;;;@;" fillHats fillHatsStep=2 fillHatsOffset=1></hyrax-seq-track>
   </hyrax-seq-tracks>
 
-  <div class="section-break"></div>
+  <div class="spacer"></div>
 
   <div class="data">
     <div class="h1">
@@ -390,23 +430,23 @@ export class App extends MobxLitElement {
 body, :host {
   display: block;
   background-color: var(--app-bg-color1);
-  margin: 0;
+  width: 100%;
+  max-width: 1024px;
+  margin: auto;
 }
 
 .info-grid {
   display: grid;
   grid-auto-rows: auto;
-  width: fit-content;
-  margin: auto;
 }
 .info-grid .data {
   grid-column: 1;
 }
 .info-grid hyrax-seq-tracks {
-  grid-column: calc(max(1, var(--multi-column) * 2));
+  grid-column: 1 / 1;
 }
 .info-grid .centered {
-  grid-column: 1 / calc(max(2, var(--multi-column) * 3));
+  grid-column: 1 / 1;
 }
 .h0 {
   color: var(--app-text-color1);
@@ -415,61 +455,47 @@ body, :host {
   margin-bottom: 2em;
 }
 .h1 {
-  margin-top: calc((1 - var(--multi-column)) * 3em);
+  margin-top: 3em;
 }
 
 .data {
   display: flex;
   flex-direction: column;
-  min-width: calc(max(80%, (1 - var(--multi-column)) * 20em));
+  min-width: max(80%, 20em);
   max-width: 30em;
   gap: 1em;
   place-self: center;
-  padding-left: calc(var(--multi-column) * 2em);
-  margin-top: 1em;
-  margin-bottom: 4em;
-  font-size: 100%;
-}
-@media (hover: none) {
-  .data {
-    font-size: 30px;
-  }
+  margin: 1em;
+  margin-top: 4em;
 }
 .data.centered {
-  margin-left: 0;
   text-align: center;
-  min-width: 0;
-  padding-left: 0;
 }
-.data.block-quote {
-  min-width: 0;
+.data .block-quote {
+  width: fit-content;
+  align-self: center;
 }
 .data .subnote {
   color: var(--app-text-color2);
-  font-size: 80%;
+  font-size: 100%;
   max-width: calc(max(50%, 30em));
   display: flex;
   flex-direction: column;
 
   div {
-    padding: 0.35em 1em;
+    padding: 0.35em 1.5em;
     margin-inline: 0;
-  }
-}
-@media (hover: none) {
-  .data .subnote {
-    font-size: 100%;
   }
 }
 
 hyrax-seq-tracks {
   --tracks-grid-color: var(--app-track-grid-color);
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
 }
 hyrax-seq-tracks.highlighted {
   background-color: var(--app-bg-color2);
-  border-left: 5px solid var(--app-hi-color1);
-  position: relative;
-  left: -5px;
+  border-left-color: var(--app-hi-color1);
   --tracks-grid-color: var(--app-text-color2);
 }
 hyrax-seq-tracks .header {
@@ -478,7 +504,7 @@ hyrax-seq-tracks .header {
 hyrax-seq-tracks .notes {
   text-align: center;
   margin-top: 1em;
-  max-width: 50%;
+  max-width: 80%;
   place-self: center;
   font-size: 80%;
   font-style: italic;
@@ -489,12 +515,47 @@ hyrax-seq-tracks .notes {
   grid-column: 1;
   padding: 5em 0;
 }
+.spacer {
+  grid-column: 1;
+  padding: 2em 0;
+}
 
 .info-grid .sampler-divider {
   place-self: center;
-  grid-column: 1 / calc(max(2, var(--multi-column) * 3));
+  grid-column: 1 / 1;
   margin: 0;
   padding: 0;
+}
+
+.floating-hint {
+  position: relative;
+  user-select: none;
+  pointer-events: none;
+
+  > div {
+    z-index: 1;
+    position: absolute;
+    background-color: var(--app-text-color2);
+    color: var(--app-bg-color1);
+    width: fit-content;
+    padding: 0.25em 0.875em;
+    opacity: 0.5;
+  }
+}
+
+.preview-button-notes {
+  > div {
+    bottom: 1em;
+    right: 50%;
+    max-width: 7em;
+  }
+}
+.play-button-notes {
+  > div {
+    top: 3.25em;
+    right: 20%;
+    max-width: 4em;
+  }
 }
 
 `];

@@ -46,14 +46,17 @@ export class SeqNote extends SeqNoteBase {
   position: absolute;
   bottom: 100%;
   left: 50%;
-  width: 10px;
+  width: 3px;
   height: 100px;
   transform: translate(-50%, 0);
   background-color: var(--app-color2);
   pointer-events: none;
   z-index: 1;
+  opacity: 0.7;
 }
 `];};
+
+  @property({ type: Boolean }) showDense = false;
 
   private svgUrl?: string;
 
@@ -68,7 +71,12 @@ export class SeqNote extends SeqNoteBase {
       runInAction(async () => {
         await AudioEnvironment.instance.samplesFuture;
         const sampleEntry = await AudioEnvironment.instance.locateSoundAsync(sample);
-        this.svgUrl = sampleEntry.svgUrl;
+        let svgUrl;
+        if (this.showDense) {
+          svgUrl = sampleEntry.denseSvgUrl;
+        }
+        svgUrl ??= sampleEntry.svgUrl;
+        this.svgUrl = svgUrl;
         this.attributeStyleMap.set('--sample-image', `url('${this.svgUrl}')`);
       });
     }

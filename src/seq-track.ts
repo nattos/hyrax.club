@@ -26,7 +26,6 @@ export class SeqTrack extends MobxLitElement {
   --_tracks-grid-color: var(--tracks-grid-color, --app-track-grid-color);
   display: block;
   position: relative;
-  width: calc(var(--note-width) * 16);
   height: var(--track-height);
   border-right: 1px solid var(--_tracks-grid-color);
   touch-action: none;
@@ -277,8 +276,9 @@ hyrax-seq-note, hyrax-seq-note-underlay {
     const engine = this.parent?.engine;
     const track = this.track;
     const playingNote = engine?.observables.channelNotes.get(track ?? '');
+    const isPreviewTrack = !!this.slicesSrc;
     let currentPatternPage = this.currentPattern;
-    if (this.slicesSrc) {
+    if (isPreviewTrack) {
       const pageLength = this.slicesPageByBars * this.seqStepDenom / this.seqStepNum;
       const noteIndex = currentPatternPage.findIndex(s => s.note?.key === playingNote);
       const pageIndex = noteIndex < 0 ? this.lastGoodPageIndex : (Math.floor(noteIndex / pageLength) | 0);
@@ -329,6 +329,7 @@ hyrax-seq-note, hyrax-seq-note-underlay {
 <hyrax-seq-note-underlay
     .parent=${this}
     .step=${n}
+    ?less=${isPreviewTrack}
     seqpos=${i}
     seqlen=${currentPatternPage.length}
     >
@@ -362,7 +363,7 @@ hyrax-seq-note, hyrax-seq-note-underlay {
 
     const patternLength = this.currentPattern.length;
     const loopLength = (Math.max(1, patternLength) | 0) * 4 * this.seqStepNum / this.seqStepDenom;
-    const loopBeat = wrapFloat01(timeBeats / loopLength) * loopLength;
+    const loopBeat = wrapFloat01(Math.max(0, timeBeats) / loopLength) * loopLength;
 
     let pageT = loopBeat / loopLength;
     let isCurrentPage = true;

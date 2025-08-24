@@ -11,7 +11,6 @@ export const COMMON_STYLES = css`
 }
 
 :host {
-  --multi-column: 1;
   --app-color1: #FFFACD;
   --app-color2: #D87093;
   --app-color3: #444444;
@@ -22,7 +21,7 @@ export const COMMON_STYLES = css`
   --app-bg-color1: #222222;
   --app-bg-color2: #313131;
 
-  --note-width: 2.8em;
+  --note-width: 2.0em;
   --track-height: 5em;
   --short-track-height: 3em;
 
@@ -30,11 +29,10 @@ export const COMMON_STYLES = css`
 
   color: var(--app-text-color2);
   font-family: Questrial, "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: calc(max(10px, min(32px, min(1.6vw, 1.6vh))));
+  font-size: 16px;
 }
 @media (max-width: 1400px) {
   :host {
-    --multi-column: 0;
   }
 }
 
@@ -63,14 +61,14 @@ em {
 .block-quote {
   background-color: var(--app-bg-color2);
   padding: 1em;
-  margin-left: calc(-1em - 5px);
+  margin-left: -1em;
   margin-right: -1em;
   border-left: 5px solid var(--app-hi-color2);
   font-style: italic;
 }
 
 .debug-button {
-  padding: 0.5em 1em;
+  padding: 0.5em 0.25em;
   color: var(--app-text-color1);
   background-color: var(--app-hi-color1);
   cursor: pointer;

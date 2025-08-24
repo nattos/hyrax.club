@@ -18,10 +18,10 @@ export class SeqTracks extends MobxLitElement {
     COMMON_STYLES,
     css`
 :host {
-  margin-left: calc(max(2em, min(var(--multi-column) * 8em, 12vw - 8em)));
-  margin-right: calc(var(--multi-column) * 1em);
-  padding: 1em 2em;
+  padding: 1em 0.5em;
   height: fit-content;
+  width: 100%;
+  box-sizing: border-box;
 }
 .outer {
   display: flex;
@@ -31,9 +31,10 @@ export class SeqTracks extends MobxLitElement {
 
 .tracks-with-extras {
   display: grid;
-  grid-template-columns: auto auto;
-  width: fit-content;
-  margin: 1em;
+  grid-template-columns: 1fr auto;
+  width: 100%;
+  box-sizing: border-box;
+  padding-left: 0.5em;
 }
 
 .header-area {
@@ -44,7 +45,7 @@ export class SeqTracks extends MobxLitElement {
   grid-area: 2 / 2;
   display: flex;
   flex-direction: column;
-  margin-left: 2em;
+  margin-left: 1em;
 }
 
 .notes-slot-area {
@@ -52,7 +53,9 @@ export class SeqTracks extends MobxLitElement {
 }
 
 .play-button {
-  min-width: 4em;
+  font-size: 80%;
+  width: 2.25em;
+  padding: 0.75em 0.25em;
 }
 
 .tracks-area {
@@ -150,6 +153,7 @@ export class SeqTracks extends MobxLitElement {
   ${notePoolSamples.map(sample => html`
   <hyrax-seq-note
       .step=${({ note: { key: '', sound: sample }, isPinned: false, isGood: false, isMoving: false } satisfies SeqStep)}
+      showDense
       @pointerdown=${wrapClick((e: PointerEvent) => this.doDragNotePoolNote(e, sample))}
       >
   </hyrax-seq-note>
@@ -174,6 +178,7 @@ export class SeqTracks extends MobxLitElement {
     </div>
     <div class="head-controls chrome">
       <div class="head-controls-preview">
+        <slot name="preview-button"></slot>
         <div
             class="debug-button play-button"
             @pointerdown=${wrapClick(this.doSoloPreview.bind(this))}
@@ -182,11 +187,12 @@ export class SeqTracks extends MobxLitElement {
         </div>
       </div>
       <div class="head-controls-edit">
+        <slot name="play-button"></slot>
         <div
             class="debug-button play-button"
             @pointerdown=${wrapClick(this.doPlayPause.bind(this))}
             >
-          ${this.engine.observables.isTransportSolidPlaying ? 'pause' : 'play'}
+          ${this.engine.observables.isTransportSolidPlaying ? 'stop' : 'play'}
         </div>
       </div>
     </div>
