@@ -16,6 +16,8 @@ export const COMMON_STYLES = css`
   --app-color3: #444444;
   --app-hi-color1: #ff4500;
   --app-hi-color2: #4169E1;
+  --app-hi-color3: #FF8C00;
+  --app-hi-color4: #FFDA63;
   --app-text-color1: #DDDDDD;
   --app-text-color2: #AAAAAA;
   --app-bg-color1: #222222;
@@ -49,7 +51,7 @@ export const COMMON_STYLES = css`
 em {
   font-style: unset;
   font-size: 90%;
-  color: var(--app-color1);
+  color: var(--app-hi-color4);
   letter-spacing: 0.05em;
 }
 

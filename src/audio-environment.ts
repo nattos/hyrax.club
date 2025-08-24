@@ -8,7 +8,8 @@ const SVG_BAR_COLORS = {
   'kick': '#ff4500',
   'snare': '#4169E1',
   'clap': '#4169E1',
-  'hat': '#FFFACD',
+  'hat': '#FFDA63',
+  'tom': '#FF8C00',
 };
 const SVG_BAR_DEFAULT_COLOR = SVG_BAR_COLORS.kick;
 
@@ -143,6 +144,7 @@ async function loadSamples(audioContext: AudioContext) {
     snare: loadSample('assets/snare.wav', 'snare', audioContext),
     hat: loadSample('assets/hat.wav', 'hat', audioContext),
     clap: loadSample('assets/clap.wav', 'clap', audioContext),
+    tom: loadSample('assets/tom.wav', 'tom', audioContext),
   };
   const samples = await Promise.all(Object.entries(sampleTasks).map(async ([k, v]) => [k, await v]));
   return Object.fromEntries(samples) as Record<keyof typeof sampleTasks, SampleEntry>;

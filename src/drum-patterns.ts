@@ -43,13 +43,16 @@ export class App extends MobxLitElement {
       boom-slap - the money beat
     </div>
     <div>
-      This is a very simple to construct beat is a great starting point to form various other beats. The alternating kick and snare 1-2 creates the "rocking" rhythm of rock music, also called the money beat. A kick for a boom, followed by a snare for a slap sound creates variation in frequency content.
+      This section introduces the first basic pattern to build off of, <em>boom-slap</em>.
     </div>
     <div>
-      Note how the kick and the snare do not overlap, they do not "hit together", so the whole thing can be sequenced with just one layer.
+       A <em>kick</em> for a boom, followed by a <em>snare</em> for a slap sound creates variation in frequency content.
     </div>
     <div>
-      You can play them together with a sample from a real song.
+      This very simple to construct pattern is a great starting point to form various other beats. The alternating kick and snare 1-2 creates the "rocking" rhythm of rock music, also called the money beat.
+    </div>
+    <div>
+      You can play the kick and snare together with a sample from a real song.
     </div>
     <div>
       Try editing the sequence, moving around the kick and snare to see how the rhythm changes.
@@ -83,7 +86,7 @@ export class App extends MobxLitElement {
   </hyrax-seq-tracks>
   <div class="data">
     <div class="block-quote">
-      Note how the kick and the snare do not overlap, they do not "hit together", so the whole thing can be sequenced with just one layer
+      Note how the kick and the snare <em>do not overlap</em>, they do not "hit together", so the whole thing can be sequenced with just one layer
     </div>
   </div>
 
@@ -97,7 +100,7 @@ export class App extends MobxLitElement {
       An important feature of this beat is the snare that hits on the "backbeat". The backbeats are the "weaker" beats 2 and 4, that sit in-between the strong kicks on 1 and 3. This snare has a lot of presence due to its stronger midtones than the kick.
     </div>
     <div class="block-quote">
-      We can treat this snare as our "timekeeper", the clock that keeps things ticking regularly
+      We can treat this snare as our <em>timekeeper</em>, the clock that keeps things ticking regularly
     </div>
     <div>
       While this isn't the only way to think of things, keeping the snare fixed to the backbeat gives us an almost cheat way to form other beats.
@@ -196,11 +199,6 @@ export class App extends MobxLitElement {
     <hyrax-seq-track class="short" slicesSrc="assets/loop_samples/hiphop_100.wav" slicesBars=2 pinned></hyrax-seq-track>
     <hyrax-seq-track pattern="@kick;;;;@snare;;@=kick;;kick;;@=kick;;@snare;;;@=kick" fillHats></hyrax-seq-track>
   </hyrax-seq-tracks>
-  <div class="data">
-    <div>
-      The dubstep rhythm is considered a half-time rhythm. The pattern is two bars, and the snares hit in the middle of each bar. The same is true for the trap beat.
-    </div>
-  </div>
 
 
 
@@ -209,6 +207,9 @@ export class App extends MobxLitElement {
   <div class="data">
     <div>
       The dubstep rhythm is considered a half-time rhythm. The pattern is two bars, and the snares hit in the middle of each bar. The same is true for the trap beat.
+    </div>
+    <div>
+      Note the use of heavy syncopation to create that "tippy" feeling in the second half of the pattern.
     </div>
   </div>
   <hyrax-seq-tracks bpm=140 allowDelete>
@@ -259,6 +260,12 @@ export class App extends MobxLitElement {
     <div>
       For simplicity, the timekeeper snares have been frozen - as we know by now, these snares don't need to move.
     </div>
+    <div>
+      The first bar is the same as the second bar, except that <em>one</em> of the kicks is delayed.
+    </div>
+    <div>
+      Try constructing the rhythm, and then moving the kick in the second bar so that it is back on beat 1. Listen to the difference.
+    </div>
   </div>
   <hyrax-seq-tracks bpm=118>
     <div slot="header" class="header">two bar seq</div>
@@ -277,6 +284,9 @@ export class App extends MobxLitElement {
     <div slot="header" class="header">hip-hop two bar</div>
     <hyrax-seq-track class="short" slicesSrc="assets/loop_samples/hiphop_100.wav" slicesBars=2 pinned slicesPageByBars=2></hyrax-seq-track>
     <hyrax-seq-track pattern="@kick;;;;@!snare;;@=kick;;kick;;@=kick;;@!snare;;;@=kick;@kick;;;;@!snare;@=kick;@=kick;;kick;;@=kick;;@!snare;;;" fillHats></hyrax-seq-track>
+    <div slot="notes" class="notes">
+      which kicks are fundamental, and which are extra?
+    </div>
   </hyrax-seq-tracks>
 
   <div class="spacer"></div>
@@ -300,10 +310,13 @@ export class App extends MobxLitElement {
       4-to-the-floor
     </div>
     <div>
-      This pattern's distinct feature is its constant, unyeilding kick drums spaced extremely regularly, hitting every single beat. It serves as the basis for all "4-to-the-floor" style music like house and techno, and all descendent genres.
+      This section introduces the second basic pattern to build off of, <em>4-to-the-floor</em>.
     </div>
     <div>
-      Frequently said to sound like "marching ants".
+      This pattern's distinct feature is its constant, unyeilding kick drums spaced extremely regularly, hitting every single beat. It serves as the basis for all "4-to-the-floor" style music like house, techno, trance, and all descendent genres.
+    </div>
+    <div>
+      Frequently said to sound like <em>marching ants</em>.
     </div>
   </div>
   <hyrax-seq-tracks bpm=130 class="highlighted">
@@ -337,7 +350,7 @@ export class App extends MobxLitElement {
       Note how in this rhythm, we now have drums hitting at the same time, necessitating care that they do not conflict too much. But, multiple drums hitting at the same time creates a sense of power.
     </div>
     <div>
-      Just like in our single-track boom-slap rhythm from before, the snares hit on the weaker beats 2 and 4.
+      Just like in our single-track boom-slap rhythm from before, the snares hit on the weaker <em>beats 2 and 4</em>.
     </div>
   </div>
 
@@ -374,6 +387,9 @@ export class App extends MobxLitElement {
   <div class="section-break"></div>
 
   <div class="data">
+    <div class="h1">
+      to align or not
+    </div>
     <div>
       The hats pattern can also be inverted. Instead of hitting on the weaker beats, we can have it hit directly on the 1-2-3-4 beats. This creates an extremely regular, aggressive feel.
     </div>
@@ -426,13 +442,101 @@ export class App extends MobxLitElement {
 
   <div class="data">
     <div>
-      This is an example of a typical 3+3+2 rhythm found in reggaeton and afrobeats. 3+3+2 refers to the spacing between beats. This syncopated rhythm creates the sense of a "bounce" or "swing".
+      This is an example of a typical <em>3+3+2</em> rhythm found in reggaeton and afrobeats. 3+3+2 refers to the spacing between beats. This syncopated rhythm creates the sense of a "bounce" or "swing".
     </div>
   </div>
 
+
+  <div class="data">
+    <div>
+      Here is the <em>reggaeton</em> beat itself. You can hear the underlying 4-to-the-floor kick pattern.
+    </div>
+    <div>
+      The 3+3+2 rhythm is formed from snare hits, instead of the kicks in the techno example previously.
+    </div>
+    <div>
+      In tradition for 4-to-the-floor rhythms we have seen so far, the additional elements are added on by layering. The layering of the 3+3+2 rhythm on top of the regular kicks creates a contrasting cross-rhythm. These two rhythms move in and out of alignment, or phase, typical of a polyrhythm.
+    </div>
+  </div>
+  <hyrax-seq-tracks bpm=119 allowDelete>
+    <div slot="header" class="header">reggaeton</div>
+    <hyrax-seq-track class="short" slicesSrc="assets/loop_samples/reggaeton_119.wav" slicesBars=4 pinned></hyrax-seq-track>
+    <hyrax-seq-track pattern="@kick;;;;@kick;;;;@kick;;;;@kick;;;"></hyrax-seq-track>
+    <hyrax-seq-track pattern="@=snare;;;@=snare;;;@=snare;;@=snare;;;@=snare;;;@=snare;"></hyrax-seq-track>
+    <div slot="notes" class="notes">
+      layer on snares with a different rhythm
+    </div>
+  </hyrax-seq-tracks>
+
+
+  <div class="data">
+    <div class="h1">
+      putting the cake all together
+    </div>
+    <div>
+      The 3+3+2 rhythm can be seen reused all over the place, and it instantly adds a bit of "funk" to a beat. It's only one example of a cross-rhythm, but it's easy to remember and can be a good starting point.
+    </div>
+    <div>
+      In the example track here, it's used more subtly with the tom drums. This usage can be found frequently in house styles, building the swing that is critical to funkier music.
+    </div>
+    <div>
+      We can also take this opportunity to build a more complete layered rhythm, with 4 different tracks - kick clap hats and toms. Gradually build up the layers, referencing previous examples as necessary.
+    </div>
+    <div>
+      For the final layer, we've also introduced a new sample, the "tom".
+    </div>
+    <div>
+      Try listening to your rhythm with and without the tom hitting on the 3+3+2 cross-rhythm to get a sense of how it contributes. You can also try constructing your own cross-rhythm by shifting the toms around to odd beats.
+    </div>
+  </div>
+  <hyrax-seq-tracks bpm=120 allowDelete samples="kick;snare;clap;hat;tom">
+    <div slot="header" class="header">layered house beat</div>
+    <hyrax-seq-track class="short" slicesSrc="assets/loop_samples/house_layered_120.wav" slicesBars=4 pinned></hyrax-seq-track>
+    <hyrax-seq-track pattern="@kick;;;;@kick;;;;@kick;;;;@kick;;;"></hyrax-seq-track>
+    <hyrax-seq-track pattern=";;;;@=clap;;;;;;;;@=clap;;;"></hyrax-seq-track>
+    <hyrax-seq-track pattern=";;@=hat;;;;@=hat;;;;@=hat;;;;@=hat;"></hyrax-seq-track>
+    <hyrax-seq-track pattern="@=tom;;;@=tom;;;@=tom;;;;;;;;;"></hyrax-seq-track>
+    <div slot="notes" class="notes">
+      layer your cake with a tom cross-rhythm
+    </div>
+  </hyrax-seq-tracks>
+
+  <div class="data">
+    <div>
+      These layered cross-rhythms are not only used for drums and percussion, but for pretty much everything imaginable. In house music in particular bass notes and synth chords or stabs often follow cross-rhythms.
+    </div>
+  </div>
+
+
+
+
+
+
   <div class="section-break"></div>
   <div class="section-break"></div>
-  <hyrax-seq-tracks class="sampler-divider" allowDelete hideChrome samples="hat"></hyrax-seq-tracks>
+  <hyrax-seq-tracks class="sampler-divider" allowDelete hideChrome samples="tom"></hyrax-seq-tracks>
+
+
+  <div class="data">
+    <div class="h1">
+      you've finished!
+    </div>
+    <div>
+      If nothing else, remember the two patterns, boom-slap and 4-to-the-floor.
+    </div>
+    <div>
+      These two patterns are very simple to construct. Once you have them, you can make some simple edits on top to get a fantastic variety of rhythms.
+    </div>
+    <div>
+      <em>boom-slap</em> benefits from shifting kicks around.
+    </div>
+    <div>
+      <em>4-to-the-floor</em> prefers layering on very simple extras, with the occasional cross-rhythm.
+    </div>
+    <div>
+      enjoy!
+    </div>
+  </div>
   <div class="section-break"></div>
   <div class="section-break"></div>
 </div>
