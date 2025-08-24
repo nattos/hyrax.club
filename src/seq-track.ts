@@ -6,7 +6,7 @@ import { clamp01, Point, wrapClick, wrapFloat01 } from './layout-utils';
 import { COMMON_STYLES } from './drum-patterns-styles';
 import { DRAG_PADDING_FRACTION, SeqTracks } from './seq-tracks';
 import { Note, NoteOr } from './audio-engine';
-import { AudioEnvironment, SampleType } from './audio-environment';
+import { AudioEnvironment, SampleType, Sound } from './audio-environment';
 import { PointerDragOp } from './pointer-drag-op';
 
 export interface SeqStep {
@@ -14,6 +14,7 @@ export interface SeqStep {
   ghostNote?: Note;
   isPinned: boolean;
   isGood: boolean;
+  goodSound?: Sound;
   isMoving: boolean;
 }
 
@@ -225,6 +226,7 @@ hyrax-seq-note, hyrax-seq-note-underlay {
 
           let isPinned = false;
           let isGood = false;
+          let isPlaceholder = false;
           while (true) {
             if (s.startsWith('!')) {
               isPinned = true;
@@ -232,19 +234,28 @@ hyrax-seq-note, hyrax-seq-note-underlay {
             } else if (s.startsWith('@')) {
               isGood = true;
               s = s.slice(1).trim();
+            } else if (s.startsWith('=')) {
+              isPlaceholder = true;
+              s = s.slice(1).trim();
             } else {
               break;
             }
           }
+          s = s.trim();
 
           let note: NoteOr;
           if (s) {
-            note = { key: AudioEnvironment.newNoteKey(), sound: s.trim() as SampleType };
+            note = { key: AudioEnvironment.newNoteKey(), sound: s as SampleType };
+          }
+          const goodSound = note?.sound;
+          if (isPlaceholder) {
+            note = undefined;
           }
           return {
             note: note,
             isPinned: isPinned,
             isGood: isGood,
+            goodSound: goodSound,
             isMoving: false,
           } satisfies SeqStep;
         }));

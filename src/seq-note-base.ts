@@ -77,6 +77,7 @@ export abstract class SeqNoteBase extends MobxLitElement {
       this.classList.toggle('ghosted', isGhosted);
       this.classList.toggle('pinned', isPinned);
       this.classList.toggle('good', this.step?.isGood);
+      this.classList.toggle('good-ok', this.step?.goodSound === sample);
       this.moving = !!this.step?.isMoving;
 
       if (!isSameSound(sample, this.cachedSound)) {

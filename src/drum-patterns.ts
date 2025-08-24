@@ -20,13 +20,13 @@ export class App extends MobxLitElement {
   </div>
   <div class="data centered">
     <div class="h0">
-      Easy drum patterns
+      <span style="position:relative;top:-0.025em;letter-spacing:-0.07em;">S</span><span style="position:relative;top:0.065em;letter-spacing:-0.1em;font-size:170%;">h</span><span style="position:relative;top:-0.07em;letter-spacing:-0.05em;">i</span><span style="position:relative;top:0.125em;">f</span><span style="position:relative;top:-0.0125em;">t</span> your beats into gear
     </div>
     <div class="block-quote">
       "Remembering sequences is hard.<br>Remembering edits is easier!"
     </div>
     <div>
-      Presenting a paradigm to constructing all sorts of drum patterns. Focus on remembering the two extremely basic fundamental patterns (boom-slap and 4-to-the-floor), and their rules-of-thumb for making edits on top.
+      Presenting a simple paradigm for building drum patterns from scratch. Focus on remembering the two extremely basic fundamental patterns (boom-slap and 4-to-the-floor), and their rules-of-thumb like <em>shifting</em> for making edits on top.
     </div>
     <div class="data centered">
       This tutorial is interactive! Warning: it may be loud.
@@ -109,7 +109,7 @@ export class App extends MobxLitElement {
   <hyrax-seq-tracks bpm=96>
     <div slot="header" class="header">a shift</div>
     <hyrax-seq-track class="short" slicesSrc="assets/loop_samples/boom_slap_hats_96.wav" slicesBars=4 pinned></hyrax-seq-track>
-    <hyrax-seq-track pattern="@kick;;;;@snare;;;;kick;;@;;@snare;;;"></hyrax-seq-track>
+    <hyrax-seq-track pattern="@kick;;;;@snare;;;;kick;;@=kick;;@snare;;;"></hyrax-seq-track>
     <div slot="notes" class="notes">
       shift the kick to match the example - small hints in blue mark correct locations
     </div>
@@ -139,7 +139,7 @@ export class App extends MobxLitElement {
   <hyrax-seq-tracks bpm=131 allowDelete samples="hat">
     <div slot="header" class="header">hats</div>
     <hyrax-seq-track class="short" slicesSrc="assets/loop_samples/boom_slap_hats_131.wav" slicesBars=4 pinned></hyrax-seq-track>
-    <hyrax-seq-track pattern="@kick;;@;;@snare;;@;;@kick;;@;;@snare;;@;"></hyrax-seq-track>
+    <hyrax-seq-track pattern="@kick;;@=hat;;@snare;;@=hat;;@kick;;@=hat;;@snare;;@=hat;"></hyrax-seq-track>
     <div slot="notes" class="notes">
       drag this sample onto the track - drag away to delete
     </div>
@@ -162,7 +162,7 @@ export class App extends MobxLitElement {
   <hyrax-seq-tracks bpm=85 allowDelete>
     <div slot="header" class="header">rnb</div>
     <hyrax-seq-track class="short" slicesSrc="assets/loop_samples/rnb_85.wav" slicesBars=4 pinned></hyrax-seq-track>
-    <hyrax-seq-track pattern="@kick;@;;;@snare;;;;kick;;@;;@snare;;;" fillHats></hyrax-seq-track>
+    <hyrax-seq-track pattern="@kick;@=kick;;;@snare;;;;kick;;@=kick;;@snare;;;" fillHats></hyrax-seq-track>
   </hyrax-seq-tracks>
 
   <div class="spacer"></div>
@@ -170,7 +170,7 @@ export class App extends MobxLitElement {
   <hyrax-seq-tracks bpm=133 allowDelete>
     <div slot="header" class="header">garage</div>
     <hyrax-seq-track class="short" slicesSrc="assets/loop_samples/garage_133.wav" slicesBars=4 pinned></hyrax-seq-track>
-    <hyrax-seq-track pattern="@kick;;;;@snare;;;@;kick;;@;;@snare;;;" fillHats fillHatsStep=2 fillHatsRetrigger></hyrax-seq-track>
+    <hyrax-seq-track pattern="@kick;;;;@snare;;;@=kick;kick;;@=kick;;@snare;;;" fillHats fillHatsStep=2 fillHatsRetrigger></hyrax-seq-track>
   </hyrax-seq-tracks>
 
   <div class="spacer"></div>
@@ -178,7 +178,7 @@ export class App extends MobxLitElement {
   <hyrax-seq-tracks bpm=130 allowDelete>
     <div slot="header" class="header">breaks</div>
     <hyrax-seq-track class="short" slicesSrc="assets/loop_samples/breaks_130.wav" slicesBars=4 pinned></hyrax-seq-track>
-    <hyrax-seq-track pattern="@kick;;;;@snare;;@;;kick;@;;;@snare;;;" fillHats fillHatsStep=2 fillHatsRetrigger></hyrax-seq-track>
+    <hyrax-seq-track pattern="@kick;;;;@snare;;@=kick;;kick;@=kick;;;@snare;;;" fillHats fillHatsStep=2 fillHatsRetrigger></hyrax-seq-track>
   </hyrax-seq-tracks>
 
   <div class="spacer"></div>
@@ -187,15 +187,24 @@ export class App extends MobxLitElement {
     <div>
       The following pattern is a bit harder to replicate. The pattern is two bars long, while ours is only one. For now, focus on replicating the first bar.
     </div>
+    <div>
+      Note that in this rhythm, some of the beats are shifted off the grid. Also called "humanization", this can be used to make a pattern feel less robotic.
+    </div>
   </div>
   <hyrax-seq-tracks bpm=100 allowDelete>
     <div slot="header" class="header">hip-hop</div>
     <hyrax-seq-track class="short" slicesSrc="assets/loop_samples/hiphop_100.wav" slicesBars=2 pinned></hyrax-seq-track>
-    <hyrax-seq-track pattern="@kick;;;;@snare;;@;;kick;;@;;@snare;;;@" fillHats></hyrax-seq-track>
+    <hyrax-seq-track pattern="@kick;;;;@snare;;@=kick;;kick;;@=kick;;@snare;;;@=kick" fillHats></hyrax-seq-track>
   </hyrax-seq-tracks>
+  <div class="data">
+    <div>
+      The dubstep rhythm is considered a half-time rhythm. The pattern is two bars, and the snares hit in the middle of each bar. The same is true for the trap beat.
+    </div>
+  </div>
 
 
 
+  <div class="spacer"></div>
 
   <div class="data">
     <div>
@@ -205,7 +214,7 @@ export class App extends MobxLitElement {
   <hyrax-seq-tracks bpm=140 allowDelete>
     <div slot="header" class="header">dubstep</div>
     <hyrax-seq-track class="short" slicesSrc="assets/loop_samples/dubstep_140.wav" slicesBars=8 slicesPageByBars=2 pinned></hyrax-seq-track>
-    <hyrax-seq-track pattern="@kick;;;;;;;;@snare;;;;;;;;kick;;;@;;;@;;@snare;;;;;;;" fillHats fillHatsStep=2></hyrax-seq-track>
+    <hyrax-seq-track pattern="@kick;;;;;;;;@snare;;;;;;;;kick;;;@=kick;;;@=kick;;@snare;;;;;;;" fillHats fillHatsStep=2></hyrax-seq-track>
   </hyrax-seq-tracks>
 
   <div class="spacer"></div>
@@ -213,7 +222,7 @@ export class App extends MobxLitElement {
   <hyrax-seq-tracks bpm=142 allowDelete beatScale=2>
     <div slot="header" class="header">trap</div>
     <hyrax-seq-track class="short" slicesSrc="assets/loop_samples/trap_142.wav" slicesBars=4 slicesPageByBars=2 pinned></hyrax-seq-track>
-    <hyrax-seq-track pattern="@kick;;;;;;@;;@snare;;;;@;;;;kick;;;;@;;;;@snare;;;;;;;" fillHats fillHatsStep=2></hyrax-seq-track>
+    <hyrax-seq-track pattern="@kick;;;;;;@=kick;;@snare;;;;@=kick;;;;kick;;;;@=kick;;;;@snare;;;;;;;" fillHats fillHatsStep=2></hyrax-seq-track>
   </hyrax-seq-tracks>
 
 
@@ -225,7 +234,7 @@ export class App extends MobxLitElement {
   <hyrax-seq-tracks bpm=174 allowDelete>
     <div slot="header" class="header">dnb</div>
     <hyrax-seq-track class="short" slicesSrc="assets/loop_samples/dnb_174.wav" slicesBars=4 pinned></hyrax-seq-track>
-    <hyrax-seq-track pattern="@kick;;;;@snare;;;;kick;;@;;@snare;;;" fillHats fillHatsStep=2></hyrax-seq-track>
+    <hyrax-seq-track pattern="@kick;;;;@snare;;;;kick;;@=kick;;@snare;;;" fillHats fillHatsStep=2></hyrax-seq-track>
   </hyrax-seq-tracks>
 
 
@@ -254,7 +263,7 @@ export class App extends MobxLitElement {
   <hyrax-seq-tracks bpm=118>
     <div slot="header" class="header">two bar seq</div>
     <hyrax-seq-track class="short" slicesSrc="assets/loop_samples/boom_slap_edit_118.wav" slicesBars=4 pinned slicesPageByBars=2></hyrax-seq-track>
-    <hyrax-seq-track pattern="@kick;;;;@!snare;;;@;kick;;;;@!snare;;;;kick;;@;;@!snare;;;@;kick;;;;@!snare;;;"></hyrax-seq-track>
+    <hyrax-seq-track pattern="@kick;;;;@!snare;;;@=kick;kick;;;;@!snare;;;;kick;;@=kick;;@!snare;;;@=kick;kick;;;;@!snare;;;"></hyrax-seq-track>
     <div slot="notes" class="notes">
       shift the kicks
     </div>
@@ -267,7 +276,7 @@ export class App extends MobxLitElement {
   <hyrax-seq-tracks bpm=100 allowDelete>
     <div slot="header" class="header">hip-hop two bar</div>
     <hyrax-seq-track class="short" slicesSrc="assets/loop_samples/hiphop_100.wav" slicesBars=2 pinned slicesPageByBars=2></hyrax-seq-track>
-    <hyrax-seq-track pattern="@kick;;;;@!snare;;@;;kick;;@;;@!snare;;;@;@kick;;;;@!snare;@;@;;kick;;@;;@!snare;;;" fillHats></hyrax-seq-track>
+    <hyrax-seq-track pattern="@kick;;;;@!snare;;@=kick;;kick;;@=kick;;@!snare;;;@=kick;@kick;;;;@!snare;@=kick;@=kick;;kick;;@=kick;;@!snare;;;" fillHats></hyrax-seq-track>
   </hyrax-seq-tracks>
 
   <div class="spacer"></div>
@@ -275,7 +284,7 @@ export class App extends MobxLitElement {
   <hyrax-seq-tracks bpm=133 allowDelete>
     <div slot="header" class="header">garage two bar</div>
     <hyrax-seq-track class="short" slicesSrc="assets/loop_samples/garage_133.wav" slicesBars=4 pinned slicesPageByBars=2></hyrax-seq-track>
-    <hyrax-seq-track pattern="@kick;;;;@!snare;;;@;kick;;;;@!snare;;;;@kick;;;;@!snare;;;@;kick;;@;;@!snare;;;" fillHats fillHatsStep=2 fillHatsRetrigger></hyrax-seq-track>
+    <hyrax-seq-track pattern="@kick;;;;@!snare;;;@=kick;kick;;;;@!snare;;;;@kick;;;;@!snare;;;@=kick;kick;;@=kick;;@!snare;;;" fillHats fillHatsStep=2 fillHatsRetrigger></hyrax-seq-track>
   </hyrax-seq-tracks>
 
 
@@ -317,7 +326,7 @@ export class App extends MobxLitElement {
     <div slot="header" class="header">house backbeat</div>
     <hyrax-seq-track class="short" slicesSrc="assets/loop_samples/house_beat_130.wav" slicesBars=4 pinned></hyrax-seq-track>
     <hyrax-seq-track pattern="@kick;;;;@kick;;;;@kick;;;;@kick;;;" pinned></hyrax-seq-track>
-    <hyrax-seq-track pattern=";;;;@;;;;;;;;@;;;"></hyrax-seq-track>
+    <hyrax-seq-track pattern=";;;;@=snare;;;;;;;;@=snare;;;"></hyrax-seq-track>
     <div slot="notes" class="notes">
       add snares - the kicks are frozen for simplicity
     </div>
@@ -345,8 +354,8 @@ export class App extends MobxLitElement {
     <div slot="header" class="header">house beat with hats</div>
     <hyrax-seq-track class="short" slicesSrc="assets/loop_samples/house_hats_128.wav" slicesBars=4 pinned></hyrax-seq-track>
     <hyrax-seq-track pattern="@kick;;;;kick;;;;@kick;;;;@kick;;;" pinned></hyrax-seq-track>
-    <hyrax-seq-track pattern=";;;;@snare;;;;;;;;@snare;;;" pinned></hyrax-seq-track>
-    <hyrax-seq-track pattern=";;@;;;;@;;;;@;;;;@;"></hyrax-seq-track>
+    <hyrax-seq-track pattern=";;;;@snare;;;;;;;;@snare;;;"></hyrax-seq-track>
+    <hyrax-seq-track pattern=";;@=hat;;;;@=hat;;;;@=hat;;;;@=hat;"></hyrax-seq-track>
   </hyrax-seq-tracks>
 
   <div class="data">
@@ -373,8 +382,8 @@ export class App extends MobxLitElement {
     <div slot="header" class="header">bigroom</div>
     <hyrax-seq-track class="short" slicesSrc="assets/loop_samples/bigroom_128.wav" slicesBars=8 pinned></hyrax-seq-track>
     <hyrax-seq-track pattern="@kick;;;;@kick;;;;@kick;;;;@kick;;;" pinned></hyrax-seq-track>
-    <hyrax-seq-track pattern=";;;;snare;;;;;;;;snare;;;" pinned></hyrax-seq-track>
-    <hyrax-seq-track pattern="@;;hat;;@;;hat;;@;;hat;;@;;hat;"></hyrax-seq-track>
+    <hyrax-seq-track pattern=";;;;@snare;;;;;;;;@snare;;;"></hyrax-seq-track>
+    <hyrax-seq-track pattern="@=hat;;hat;;@=hat;;hat;;@=hat;;hat;;@=hat;;hat;"></hyrax-seq-track>
   </hyrax-seq-tracks>
 
 
@@ -391,8 +400,8 @@ export class App extends MobxLitElement {
     <div slot="header" class="header">trance</div>
     <hyrax-seq-track class="short" slicesSrc="assets/loop_samples/trance_138.wav" slicesBars=8 pinned></hyrax-seq-track>
     <hyrax-seq-track pattern="@kick;;;;@kick;;;;@kick;;;;@kick;;;" pinned></hyrax-seq-track>
-    <hyrax-seq-track pattern=";;;;@clap;;;;;;;;@clap;;;" pinned></hyrax-seq-track>
-    <hyrax-seq-track pattern=";;@;;;;@;;;;@;;;;@;" fillHats fillHatsStep=2 fillHatsOffset=1></hyrax-seq-track>
+    <hyrax-seq-track pattern=";;;;@clap;;;;;;;;@clap;;;"></hyrax-seq-track>
+    <hyrax-seq-track pattern=";;@=hat;;;;@=hat;;;;@=hat;;;;@=hat;" fillHats fillHatsStep=2 fillHatsOffset=1></hyrax-seq-track>
   </hyrax-seq-tracks>
 
   <div class="spacer"></div>
@@ -408,12 +417,18 @@ export class App extends MobxLitElement {
   <hyrax-seq-tracks bpm=135 allowDelete>
     <div slot="header" class="header">techno breaks</div>
     <hyrax-seq-track class="short" slicesSrc="assets/loop_samples/techno_breaks_135.wav" slicesBars=2 pinned></hyrax-seq-track>
-    <hyrax-seq-track pattern="@kick;;;@;kick;;@;;@kick;;;@;kick;;@;"></hyrax-seq-track>
+    <hyrax-seq-track pattern="@kick;;;@=kick;kick;;@=kick;;@kick;;;@=kick;kick;;@=kick;"></hyrax-seq-track>
     <hyrax-seq-track pattern=";;;;;;;;;;;;;;;" fillHats fillHatsStep=2></hyrax-seq-track>
     <div slot="notes" class="notes">
       break up the regularity by shifting those kicks
     </div>
   </hyrax-seq-tracks>
+
+  <div class="data">
+    <div>
+      This is an example of a typical 3+3+2 rhythm found in reggaeton and afrobeats. 3+3+2 refers to the spacing between beats. This syncopated rhythm creates the sense of a "bounce" or "swing".
+    </div>
+  </div>
 
   <div class="section-break"></div>
   <div class="section-break"></div>
@@ -453,6 +468,11 @@ body, :host {
   font-size: 300%;
   letter-spacing: 0.0125em;
   margin-bottom: 2em;
+
+  span {
+    font-size: 200%;
+    color: var(--app-hi-color1);
+  }
 }
 .h1 {
   margin-top: 3em;

@@ -25,17 +25,21 @@ export class SeqNoteUnderlay extends SeqNoteBase {
 .good-indicator {
   display: none;
   position: absolute;
-  bottom: calc(-3px - 0.275em);
-  height: 0.25em;
-  width: 0.125em;
-  left: calc(50% + 1px);
+  bottom: -11px;
+  height: 5px;
+  width: 3px;
+  left: calc(50% + var(--pixel));
   transform: translate(-50%, 0);
-  background-color: var(--app-hi-color2);
+  border: 1px dotted var(--app-hi-color2);
 }
 :host(.good) .good-indicator {
   display: block;
 }
+:host(.good-ok) .good-indicator {
+  background-color: var(--app-hi-color2);
+}
 :host(.pinned) .good-indicator {
+  border-color: var(--app-bg-color2);
   background-color: var(--app-bg-color2);
 }
 
