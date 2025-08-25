@@ -277,7 +277,6 @@ export class AudioEngine {
           const coarseDurationBeats = Math.round(rawDurationBeats) | 0;
           const fineDurationBeats = rawDurationBeats - coarseDurationBeats;
           const isAligned = Math.abs(fineDurationBeats) < LAUNCH_FUDGE;
-          console.log(sampleDuration, fineDurationBeats, isAligned);
           if (isAligned) {
             alignedToBeatNumber = coarseDurationBeats;
           }
