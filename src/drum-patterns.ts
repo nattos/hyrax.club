@@ -26,7 +26,7 @@ export class App extends MobxLitElement {
       "Remembering sequences is hard.<br>Remembering edits is easier!"
     </div>
     <div>
-      Presenting a simple paradigm for building drum patterns from scratch. Focus on remembering the two extremely basic fundamental patterns (boom-slap and 4-to-the-floor), and their rules-of-thumb like <em>shifting</em> for making edits on top.
+      Presenting a simple paradigm for building drum patterns from scratch. Focus on remembering the two extremely basic fundamental patterns (boom-crack and 4-to-the-floor), and their rules-of-thumb like <em>shifting</em> for making edits on top.
     </div>
     <div class="data centered">
       This tutorial is interactive! Warning: it may be loud.
@@ -40,13 +40,13 @@ export class App extends MobxLitElement {
 
   <div class="data">
     <div class="h1">
-      boom-slap - the money beat
+      boom-crack - the money beat
     </div>
     <div>
-      This section introduces the first basic pattern to build off of, <em>boom-slap</em>.
+      This section introduces the first basic pattern to build off of, <em>boom-crack</em>.
     </div>
     <div>
-       A <em>kick</em> for a boom, followed by a <em>snare</em> for a slap sound creates variation in frequency content.
+       A <em>kick</em> for a boom, followed by a <em>snare</em> for an explosive crack creates variation in frequency content.
     </div>
     <div>
       This very simple to construct pattern is a great starting point to form various other beats. The alternating kick and snare 1-2 creates the "rocking" rhythm of rock music, also called the money beat.
@@ -350,7 +350,7 @@ export class App extends MobxLitElement {
       Note how in this rhythm, we now have drums hitting at the same time, necessitating care that they do not conflict too much. But, multiple drums hitting at the same time creates a sense of power.
     </div>
     <div>
-      Just like in our single-track boom-slap rhythm from before, the snares hit on the weaker <em>beats 2 and 4</em>.
+      Just like in our single-track boom-crack rhythm from before, the snares hit on the weaker <em>beats 2 and 4</em>.
     </div>
   </div>
 
@@ -442,7 +442,10 @@ export class App extends MobxLitElement {
 
   <div class="data">
     <div>
-      This is an example of a typical <em>3+3+2</em> rhythm found in reggaeton and afrobeats. 3+3+2 refers to the spacing between beats. This syncopated rhythm creates the sense of a "bounce" or "swing".
+      This is an example of a typical <em>3+3+2</em> rhythm found in reggaeton and afrobeats. 3+3+2 refers to the spacing between beats. In this case, there are two repeats, one starting on beat 1, and the other starting on beat 3. The syncopated 3+3+2 rhythm creates the sense of a "bounce" or "swing".
+    </div>
+    <div>
+      You can try shifting around the kicks even more to get a sense of which patterns have more or less swing. You can also delete kicks to see which are more or less critical.
     </div>
   </div>
 
@@ -522,13 +525,13 @@ export class App extends MobxLitElement {
       you've finished!
     </div>
     <div>
-      If nothing else, remember the two patterns, boom-slap and 4-to-the-floor.
+      If nothing else, remember the two patterns, boom-crack and 4-to-the-floor.
     </div>
     <div>
       These two patterns are very simple to construct. Once you have them, you can make some simple edits on top to get a fantastic variety of rhythms.
     </div>
     <div>
-      <em>boom-slap</em> benefits from shifting kicks around.
+      <em>boom-crack</em> benefits from shifting kicks around.
     </div>
     <div>
       <em>4-to-the-floor</em> prefers layering on very simple extras, with the occasional cross-rhythm.
