@@ -269,7 +269,26 @@ export class AudioEngine {
         outNode.connect(track.inNode);
 
         const nextBeatContextTime = contextTime + beatDuration * (1.0 - fineThisBeatNumber + i);
-        bufferNode.start(nextBeatContextTime, sample.offset, sample.duration);
+        const sampleOffset = sample.offset;
+        const sampleDuration = sample.duration;
+        let alignedToBeatNumber: number | undefined = undefined;
+        if (sampleDuration) {
+          const rawDurationBeats = sampleDuration / beatDuration;
+          const coarseDurationBeats = Math.round(rawDurationBeats) | 0;
+          const fineDurationBeats = rawDurationBeats - coarseDurationBeats;
+          const isAligned = Math.abs(fineDurationBeats) < LAUNCH_FUDGE;
+          console.log(sampleDuration, fineDurationBeats, isAligned);
+          if (isAligned) {
+            alignedToBeatNumber = coarseDurationBeats;
+          }
+        }
+        if (alignedToBeatNumber !== undefined) {
+          const nextNextBeatContextTime = contextTime + beatDuration * (1.0 - fineThisBeatNumber + i + alignedToBeatNumber);
+          bufferNode.start(nextBeatContextTime, sampleOffset);
+          bufferNode.stop(nextNextBeatContextTime);
+        } else {
+          bufferNode.start(nextBeatContextTime, sampleOffset, sampleDuration);
+        }
       }
     }
 
