@@ -166,6 +166,9 @@ export class App extends MobxLitElement {
     <div slot="header" class="header">rnb</div>
     <hyrax-seq-track class="short" slicesSrc="assets/loop_samples/rnb_85.wav" slicesBars=4 pinned></hyrax-seq-track>
     <hyrax-seq-track pattern="@kick;@=kick;;;@snare;;;;kick;;@=kick;;@snare;;;" fillHats></hyrax-seq-track>
+    <div slot="notes" class="notes">
+      you can focus on the kick + snare - placeholder hats are added automatically
+    </div>
   </hyrax-seq-tracks>
 
   <div class="spacer"></div>
