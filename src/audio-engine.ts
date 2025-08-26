@@ -1,14 +1,20 @@
 import { action, makeObservable, observable, runInAction } from 'mobx';
 import { wrapInt } from './layout-utils';
-import { AudioEnvironment, Samples, SampleType, Sound } from './audio-environment';
+import { AudioEnvironment, isSameSound, isSameUnderlyingSound, Samples, SampleType, Sound } from './audio-environment';
 import { isMobile, sleep } from './utils';
 
 export interface NoteInstance {
   key: string;
   sound: Sound;
   node: AudioBufferSourceNode;
-  outNode: AudioNode;
+  outNode: GainNode;
   isEnded: boolean;
+  scheduled?: {
+    contextTime: number;
+    sampleOffset: number;
+    sampleDuration: number;
+  };
+  coalescedFromInstance?: NoteInstance;
 }
 
 export interface Note {
@@ -36,6 +42,7 @@ export interface TrackOptions {
 }
 
 const LAUNCH_FUDGE = 10 / 1000.0; // A few millis.
+const COALESCE_FUDGE = 1 / 1000.0; // Very tight.
 const BEAT_GRANULARITY = 16; // 1 / 64th notes.
 const QUEUE_AHEAD_LENGTH = 16;
 const SEQUENCER_UPDATE_DELAY = 10;
@@ -205,12 +212,16 @@ export class AudioEngine {
     const advancedByBeatsCount = Math.max(0, coarseThisBeatNumber - coarsePrevBeatNumber) | 0;
     for (let i = 0; i < advancedByBeatsCount; ++i) {
       for (const track of this.tracks.values()) {
-        if (track.queued[0] || track.playing?.isEnded) {
-          const oldKey = track.playing?.key;
-          const newKey = track.queued[0]?.key;
-          track.playing?.node.disconnect();
-          track.playing?.outNode.disconnect();
-          track.playing = track.queued[0];
+        const oldPlaying = track.playing;
+        const newPlaying = track.queued[0];
+        if (newPlaying || oldPlaying?.isEnded) {
+          const oldKey = oldPlaying?.key;
+          const newKey = newPlaying?.key;
+          if (oldPlaying?.node !== newPlaying?.node) {
+            oldPlaying?.node.disconnect();
+            oldPlaying?.outNode.disconnect();
+          }
+          track.playing = newPlaying;
           if (oldKey !== newKey) {
             didNotesChange = true;
           }
@@ -226,6 +237,7 @@ export class AudioEngine {
       track.muteNode.gain.value = track.options.muted ? 0.0 : 1.0;
 
       const pattern = track.pattern;
+      let play = track.playing;
       for (let i = 0; i < QUEUE_AHEAD_LENGTH; ++i) {
         const stepRatio = Math.round(track.options.seqStepSize * BEAT_GRANULARITY * 4) | 0;
         const stepSubIndex = wrapInt((coarseThisBeatNumber + i + 1), stepRatio);
@@ -241,36 +253,68 @@ export class AudioEngine {
           continue;
         }
         didNotesChange = true;
-        oldQueued?.node.disconnect();
-        oldQueued?.outNode.disconnect();
+        if (!oldQueued?.coalescedFromInstance) {
+          oldQueued?.node.disconnect();
+          oldQueued?.outNode.disconnect();
+        }
         track.queued[i] = undefined;
 
         if (!nextNote) {
           continue;
         }
-        const bufferNode = this.audioContext.createBufferSource();
+
+        let bufferNode: AudioBufferSourceNode | undefined;
+        let outNode: GainNode | undefined;
+        let coalescedFromInstance: NoteInstance | undefined;
+
         const sample = AudioEnvironment.instance.locateSoundDirty(nextNote.sound);
-        bufferNode.buffer = sample.audioBuffer;
-        const outNode = this.audioContext.createGain();
-        outNode.gain.value = nextNote.gain ?? 1.0;
+        const nextBeatContextTime = contextTime + beatDuration * (1.0 - fineThisBeatNumber + i);
+        const sampleOffset = sample.offset;
+        const sampleDuration = sample.duration;
+        if (sampleOffset !== undefined &&
+            sampleDuration !== undefined &&
+            play?.scheduled &&
+            isSameUnderlyingSound(play.sound, nextNote.sound)) {
+          const scheduled = play.scheduled;
+          const scheduledElapsed = Math.min(scheduled.sampleDuration, nextBeatContextTime - scheduled.contextTime);
+          const scheduledPlayedToSampleTime = scheduledElapsed + scheduled.sampleOffset;
+          const scheduledDelta = scheduledPlayedToSampleTime - sampleOffset;
+          const isTimingAligned = Math.abs(scheduledDelta) < COALESCE_FUDGE;
+          const isStillPlaying = (sampleOffset + sampleDuration) <= (scheduledPlayedToSampleTime + scheduled.sampleDuration) + COALESCE_FUDGE;
+          const canCoalesce = isTimingAligned && isStillPlaying;
+          if (canCoalesce) {
+            coalescedFromInstance = play;
+            outNode = play.outNode;
+            bufferNode = play.node;
+          }
+        }
+
+        if (!outNode) {
+          outNode = this.audioContext.createGain();
+          outNode.connect(track.inNode);
+          outNode.gain.value = nextNote.gain ?? 1.0;
+        }
+        if (!bufferNode) {
+          bufferNode = this.audioContext.createBufferSource();
+          bufferNode.buffer = sample.audioBuffer;
+          bufferNode.connect(outNode);
+        }
+
         const toQueue: NoteInstance = {
           key: nextNote.key,
           sound: nextNote.sound,
           node: bufferNode,
           outNode: outNode,
           isEnded: false,
+          coalescedFromInstance,
         };
         toQueue.node.onended = () => {
           toQueue.isEnded = true;
         };
         track.queued[i] = toQueue;
+        play = toQueue;
 
-        bufferNode.connect(outNode);
-        outNode.connect(track.inNode);
 
-        const nextBeatContextTime = contextTime + beatDuration * (1.0 - fineThisBeatNumber + i);
-        const sampleOffset = sample.offset;
-        const sampleDuration = sample.duration;
         let alignedToBeatNumber: number | undefined = undefined;
         if (sampleDuration) {
           const rawDurationBeats = sampleDuration / beatDuration;
@@ -281,12 +325,27 @@ export class AudioEngine {
             alignedToBeatNumber = coarseDurationBeats;
           }
         }
+
+        let stopContextTime: number | undefined = undefined;
         if (alignedToBeatNumber !== undefined) {
-          const nextNextBeatContextTime = contextTime + beatDuration * (1.0 - fineThisBeatNumber + i + alignedToBeatNumber);
-          bufferNode.start(nextBeatContextTime, sampleOffset);
-          bufferNode.stop(nextNextBeatContextTime);
+          stopContextTime = contextTime + beatDuration * (1.0 - fineThisBeatNumber + i + alignedToBeatNumber);
+        }
+
+        if (sampleDuration !== undefined || coalescedFromInstance) {
+          stopContextTime ??= nextBeatContextTime + (sampleDuration ?? 0);
+          if (!coalescedFromInstance) {
+            bufferNode.start(nextBeatContextTime, sampleOffset);
+          }
+          bufferNode.stop(stopContextTime);
         } else {
           bufferNode.start(nextBeatContextTime, sampleOffset, sampleDuration);
+        }
+        if (sampleOffset !== undefined && sampleDuration !== undefined) {
+          toQueue.scheduled = {
+            contextTime: nextBeatContextTime,
+            sampleOffset: sampleOffset,
+            sampleDuration: sampleDuration,
+          };
         }
       }
     }

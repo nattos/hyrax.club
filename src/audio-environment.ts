@@ -27,6 +27,7 @@ export type Sound = SampleType|SoundRef;
 export interface SoundRef {
   audio: {
     key: string;
+    underlyingKey: string;
   }
 }
 
@@ -60,8 +61,9 @@ export class AudioEnvironment {
     if (oldTask) {
       return oldTask;
     }
+    const underlyingKey = AudioEnvironment.newNoteKey();
     const entries = Array.from(utils.range(sliceSteps)).map(() => {
-      const ref: SoundRef = { audio: { key: AudioEnvironment.newNoteKey() } };
+      const ref: SoundRef = { audio: { key: AudioEnvironment.newNoteKey(), underlyingKey: underlyingKey } };
       const future = new utils.Resolvable<SampleEntry>();
       return { ref, future };
     });
@@ -136,6 +138,16 @@ export function isSameSound(a: Sound | undefined, b: Sound | undefined) {
     return false;
   }
   return a?.audio.key === b?.audio.key;
+}
+
+export function isSameUnderlyingSound(a: Sound | undefined, b: Sound | undefined) {
+  if (a === b) {
+    return true;
+  }
+  if (typeof a === 'string' || typeof b === 'string') {
+    return false;
+  }
+  return a?.audio.underlyingKey === b?.audio.underlyingKey;
 }
 
 async function loadSamples(audioContext: AudioContext) {
